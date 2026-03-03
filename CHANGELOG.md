@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.9] - 2026-03-04
+
+### Added
+- 6-node ready-to-use templates:
+  - `examples/nodes.6.example.json`
+  - `examples/deploy-6.sh`
+- Documentation updated with template references.
+
 ## [1.0.8] - 2026-03-04
 
 ### Added

@@ -81,3 +81,10 @@ journalctl -u traffic-local-bot.service -n 80 --no-pager
 
 ## 许可证
 MIT
+
+
+## 6台服务器现成模板
+- 节点模板：`examples/nodes.6.example.json`
+- 批量部署示例：`examples/deploy-6.sh`
+
+可直接按模板替换 IP/节点名后使用。

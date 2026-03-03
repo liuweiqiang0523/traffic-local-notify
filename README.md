@@ -52,3 +52,8 @@ Removes:
 
 ## License
 MIT
+
+
+## 6-node templates
+- Node inventory template: `examples/nodes.6.example.json`
+- Deployment helper sample: `examples/deploy-6.sh`

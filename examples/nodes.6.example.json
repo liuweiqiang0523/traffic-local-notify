@@ -1,0 +1,8 @@
+[
+  {"name":"lax-01","host":"149.88.94.157","port":22,"user":"root","key":"/root/.ssh/id_ed25519"},
+  {"name":"hkg-01","host":"x.x.x.x","port":22,"user":"root","key":"/root/.ssh/id_ed25519"},
+  {"name":"jpn-01","host":"x.x.x.x","port":22,"user":"root","key":"/root/.ssh/id_ed25519"},
+  {"name":"sgp-01","host":"x.x.x.x","port":22,"user":"root","key":"/root/.ssh/id_ed25519"},
+  {"name":"de-01","host":"x.x.x.x","port":22,"user":"root","key":"/root/.ssh/id_ed25519"},
+  {"name":"us-01","host":"x.x.x.x","port":22,"user":"root","key":"/root/.ssh/id_ed25519"}
+]
