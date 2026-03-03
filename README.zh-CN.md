@@ -15,7 +15,7 @@
 bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/install.sh)
 ```
 
-### 2) 一键安装 + 交互式初始化（推荐，v1.0.2）
+### 2) 一键安装 + 交互式初始化（推荐，v1.0.2+）
 ```bash
 INIT=true bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/install.sh)
 ```
@@ -32,6 +32,18 @@ INIT=true bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/tr
 - 写配置
 - 测试推送一次
 - 让你选择 cron / systemd / none 定时模式
+
+## 一键自检（v1.0.3）
+部署完执行：
+```bash
+python3 /opt/traffic-local/report.py --self-check
+```
+会检查：
+- 配置文件字段
+- token 文件可读性
+- vnstat 与网卡有效性
+- Telegram API 连通性（getMe）
+- 定时器状态（cron/systemd）
 
 ## 定时方案
 
@@ -56,20 +68,11 @@ traffic-send   # 立即推送一次
 python3 /opt/traffic-local/report.py --show-config
 python3 /opt/traffic-local/report.py --dry-run
 python3 /opt/traffic-local/report.py --send
+python3 /opt/traffic-local/report.py --self-check
 
 tail -n 50 /opt/traffic-local/run.log
 cat /opt/traffic-local/state.json
 ```
-
-## 新特性（v1.0.2）
-- 交互式初始化：`INIT=true`
-- 安装后自动测试推送
-- 安装时可选定时方式（cron/systemd/none）
-
-## 新特性（v1.0.1）
-- 支持 `interface: auto` 自动网卡检测
-- 错误提示更详细（vnstat/JSON/Telegram）
-- 新增 systemd timer 模板
 
 ## 配置字段说明
 见：`config.template.json`

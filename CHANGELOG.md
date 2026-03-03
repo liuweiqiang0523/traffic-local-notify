@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.3] - 2026-03-04
+
+### Added
+- `--self-check` mode in `report.py`:
+  - config validation
+  - token file checks
+  - vnstat/interface checks
+  - Telegram API getMe connectivity check
+  - scheduler presence check (cron/systemd)
+- Optional `--show-config` with self-check output.
+
+### Changed
+- Documentation updated with self-check workflow.
+
 ## [1.0.2] - 2026-03-04
 
 ### Added

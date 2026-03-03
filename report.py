@@ -15,7 +15,7 @@ import subprocess
 import urllib.error
 import urllib.parse
 import urllib.request
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, List, Tuple
 
 CFG = "/opt/traffic-local/config.json"
 STA = "/opt/traffic-local/state.json"
@@ -72,6 +72,15 @@ def tg_send(token: str, chat_id: str, text: str) -> None:
         urllib.request.urlopen(req, timeout=20).read()
     except urllib.error.URLError as e:
         raise ReportError(f"Telegram 推送失败: {e}") from e
+
+
+def tg_get_me(token: str) -> Dict[str, Any]:
+    url = f"https://api.telegram.org/bot{token}/getMe"
+    try:
+        raw = urllib.request.urlopen(url, timeout=20).read().decode("utf-8")
+        return json.loads(raw)
+    except Exception as e:
+        raise ReportError(f"Telegram getMe 失败: {e}") from e
 
 
 def detect_default_interface() -> str:
@@ -173,12 +182,114 @@ def validate_config(cfg: Dict[str, Any]) -> None:
         raise ReportError("limit_gb 必须 > 0")
 
 
+def check_scheduler() -> Tuple[bool, str]:
+    timer_active = False
+    cron_active = False
+
+    # systemd timer
+    try:
+        subprocess.check_output(["systemctl", "is-enabled", "traffic-local-report.timer"], stderr=subprocess.STDOUT, text=True)
+        timer_active = True
+    except Exception:
+        timer_active = False
+
+    # cron
+    try:
+        cron = subprocess.check_output(["bash", "-lc", "crontab -l 2>/dev/null || true"], text=True)
+        if "/opt/traffic-local/report.py" in cron:
+            cron_active = True
+    except Exception:
+        cron_active = False
+
+    if timer_active and cron_active:
+        return True, "定时器: systemd + cron 都存在（建议保留一种）"
+    if timer_active:
+        return True, "定时器: systemd timer 已启用"
+    if cron_active:
+        return True, "定时器: cron 已配置"
+    return False, "定时器: 未检测到（请配置 cron 或 systemd timer）"
+
+
+def run_self_check(show_config: bool = False) -> int:
+    checks: List[Tuple[str, str]] = []
+
+    # 1) config
+    try:
+        cfg = load_json(CFG, {})
+        if not cfg:
+            raise ReportError(f"缺少配置文件：{CFG}")
+
+        if str(cfg.get("interface", "")).strip().lower() in ("", "auto"):
+            cfg["interface"] = detect_default_interface()
+
+        validate_config(cfg)
+        checks.append(("PASS", f"配置检查通过（server={cfg['server_name']} iface={cfg['interface']}）"))
+    except Exception as e:
+        checks.append(("FAIL", f"配置检查失败: {e}"))
+        cfg = {}
+
+    # 2) token
+    try:
+        token_file = cfg.get("telegram_bot_token_file", "")
+        if not token_file:
+            raise ReportError("未配置 telegram_bot_token_file")
+        if not os.path.exists(token_file):
+            raise ReportError(f"token 文件不存在: {token_file}")
+        token = open(token_file, "r", encoding="utf-8").read().strip()
+        if not token:
+            raise ReportError(f"token 文件为空: {token_file}")
+        checks.append(("PASS", f"Token 文件可读: {token_file}"))
+    except Exception as e:
+        checks.append(("FAIL", f"Token 检查失败: {e}"))
+        token = ""
+
+    # 3) vnstat and interface
+    try:
+        vn_data = get_vnstat_json()
+        iface = cfg.get("interface", "eth0")
+        get_vnstat_totals(vn_data, iface)
+        checks.append(("PASS", f"vnstat 数据可读，网卡有效: {iface}"))
+    except Exception as e:
+        checks.append(("FAIL", f"vnstat 检查失败: {e}"))
+
+    # 4) Telegram API getMe
+    if token:
+        try:
+            me = tg_get_me(token)
+            if not me.get("ok"):
+                raise ReportError(str(me))
+            username = me.get("result", {}).get("username", "unknown")
+            checks.append(("PASS", f"Telegram 联通正常: @{username}"))
+        except Exception as e:
+            checks.append(("FAIL", f"Telegram 检查失败: {e}"))
+
+    # 5) scheduler
+    ok, msg = check_scheduler()
+    checks.append(("PASS" if ok else "WARN", msg))
+
+    if show_config and cfg:
+        print("\n--- Effective Config ---")
+        print(json.dumps(cfg, ensure_ascii=False, indent=2))
+
+    print("\n=== Self Check ===")
+    for level, msg in checks:
+        icon = {"PASS": "✅", "WARN": "⚠️", "FAIL": "❌"}.get(level, "•")
+        print(f"{icon} [{level}] {msg}")
+
+    has_fail = any(level == "FAIL" for level, _ in checks)
+    return 1 if has_fail else 0
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--send", action="store_true", help="强制推送 Telegram")
     parser.add_argument("--dry-run", action="store_true", help="只输出，不推送")
     parser.add_argument("--show-config", action="store_true", help="显示当前生效配置")
+    parser.add_argument("--self-check", action="store_true", help="执行环境自检并输出结果")
     args = parser.parse_args()
+
+    if args.self_check:
+        raise SystemExit(run_self_check(show_config=args.show_config))
 
     cfg = load_json(CFG, {})
     if not cfg:

@@ -14,6 +14,7 @@ Lightweight per-server monthly traffic monitor with vnStat + Python + Telegram n
 - Auto interface support (`"interface": "auto"`)
 - Optional `systemd timer` mode
 - Interactive init mode (`INIT=true`)
+- One-shot self-check mode (`--self-check`)
 
 ## Quick Install (root)
 
@@ -27,7 +28,10 @@ bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-loca
 INIT=true bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/install.sh)
 ```
 
-Interactive mode asks for server name, interface, limit, billing cycle, Telegram chat_id and bot token, then runs a test send.
+## Self Check
+```bash
+python3 /opt/traffic-local/report.py --self-check
+```
 
 ## Scheduling
 
