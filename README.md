@@ -4,29 +4,27 @@
 
 Lightweight per-server monthly traffic monitor with vnStat + Python + Telegram notifications.
 
-## Recommended Architecture (for 5~6 servers)
-- **Master node**: command listener + remote query hub
+## Recommended Architecture
+- **Master node**: Telegram command listener + remote query hub
 - **Worker nodes**: scheduled local reporting only
 
-This avoids multiple servers competing for the same Telegram `getUpdates` stream.
+This avoids multiple servers competing for one Telegram bot `getUpdates` stream.
 
-## One-line Deploy (v1.0.7)
+## One-command scripts (cluster)
 
 ### Master
 ```bash
-DEPLOY_ROLE="master" INIT=true SCHEDULE_MODE="cron" \
-SERVER_NAME="master-hub" LIMIT_GB="25600" CHAT_ID="-100xxxx" BOT_TOKEN="123:abc" \
-bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/install.sh)
+ROLE=master SERVER_NAME="master-hub" LIMIT_GB="25600" CHAT_ID="-100xxxx" BOT_TOKEN="123:abc" \
+bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/setup-cluster.sh)
 ```
 
 ### Worker
 ```bash
-DEPLOY_ROLE="worker" INIT=true SCHEDULE_MODE="cron" \
-SERVER_NAME="lax-01" LIMIT_GB="25600" CHAT_ID="-100xxxx" BOT_TOKEN="123:abc" \
-bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/install.sh)
+ROLE=worker SERVER_NAME="lax-01" LIMIT_GB="25600" CHAT_ID="-100xxxx" BOT_TOKEN="123:abc" \
+bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/setup-cluster.sh)
 ```
 
-## Telegram Commands (master only)
+## Telegram Commands (master)
 - `/help`
 - `/nodes`
 - `/traffic`
@@ -35,8 +33,22 @@ bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-loca
 - `/selfcheck <node>`
 - `/traffic_send`
 
-## Remote Node List (master)
-Configure `/opt/traffic-local/nodes.json` (generated from `nodes.example.json`) and ensure SSH key-based access from master to workers.
+## v1.0.8 fallback behavior
+If remote SSH query fails, bot returns:
+- classified failure reason
+- troubleshooting hints
+- fallback local result from master
+
+## Uninstall
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/uninstall.sh)
+```
+
+Removes:
+- `/opt/traffic-local`
+- report timer/service
+- bot listener service
+- related cron entries
 
 ## License
 MIT

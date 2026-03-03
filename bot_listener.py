@@ -6,8 +6,8 @@ Master mode supports remote node query via SSH:
 - /traffic_send            -> local report send
 - /selfcheck               -> local self-check
 - /nodes                   -> list configured nodes
-- /traffic <node>          -> query remote node dry-run
-- /selfcheck <node>        -> remote self-check
+- /traffic <node>          -> query remote node dry-run (with fallback hints)
+- /selfcheck <node>        -> remote self-check (with fallback hints)
 - /help                    -> command help
 """
 
@@ -18,7 +18,7 @@ import subprocess
 import time
 import urllib.parse
 import urllib.request
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 CFG = "/opt/traffic-local/config.json"
 OFFSET_FILE = "/opt/traffic-local/bot.offset"
@@ -26,7 +26,6 @@ REPORT = "/opt/traffic-local/report.py"
 NODES = "/opt/traffic-local/nodes.json"
 
 
-# -------- utils --------
 def load_json(path: str, default: Any):
     if not os.path.exists(path):
         return default
@@ -85,15 +84,13 @@ def run_local_report(args: List[str]) -> str:
         return f"ERROR: {e}"
 
 
-# -------- remote via ssh --------
 def load_nodes() -> List[Dict[str, Any]]:
     return load_json(NODES, [])
 
 
 def find_node(name: str) -> Optional[Dict[str, Any]]:
-    nodes = load_nodes()
     q = name.strip().lower()
-    for n in nodes:
+    for n in load_nodes():
         if str(n.get("name", "")).lower() == q:
             return n
     return None
@@ -109,43 +106,92 @@ def node_list_text() -> str:
     return "\n".join(lines)
 
 
-def run_remote(node: Dict[str, Any], report_args: List[str]) -> str:
+def ssh_cmd_for_node(node: Dict[str, Any], report_args: List[str]) -> List[str]:
     host = node.get("host")
     user = node.get("user", "root")
     port = int(node.get("port", 22))
     key = node.get("key", "")
 
-    if not host:
-        return "ERROR: 节点缺少 host"
-
     remote_cmd = "python3 /opt/traffic-local/report.py " + " ".join(shlex.quote(a) for a in report_args)
-    ssh_cmd = [
+    cmd = [
         "ssh",
         "-o",
         "BatchMode=yes",
         "-o",
         "StrictHostKeyChecking=accept-new",
+        "-o",
+        "ConnectTimeout=10",
         "-p",
         str(port),
     ]
     if key:
-        ssh_cmd += ["-i", key]
-    ssh_cmd += [f"{user}@{host}", remote_cmd]
+        cmd += ["-i", key]
+    cmd += [f"{user}@{host}", remote_cmd]
+    return cmd
 
+
+def classify_ssh_error(output: str) -> Tuple[str, List[str]]:
+    t = output.lower()
+    if "permission denied" in t:
+        return "SSH 鉴权失败", [
+            "确认主控机公钥已写入目标节点 ~/.ssh/authorized_keys",
+            "确认 nodes.json 的 user/key 路径正确",
+        ]
+    if "no route to host" in t or "network is unreachable" in t:
+        return "网络不可达", [
+            "检查目标主机 IP/端口 是否正确",
+            "检查安全组/防火墙是否放行 22 端口",
+        ]
+    if "connection timed out" in t or "operation timed out" in t:
+        return "连接超时", [
+            "检查节点在线状态",
+            "检查 22 端口连通性（telnet/nc）",
+        ]
+    if "host key verification failed" in t:
+        return "主机指纹校验失败", [
+            "删除旧 known_hosts 记录后重试",
+            "或手动 ssh 一次确认新指纹",
+        ]
+    if "could not resolve hostname" in t:
+        return "主机名解析失败", [
+            "检查 nodes.json 里的 host 是否写错",
+            "建议直接填 IP",
+        ]
+    return "远程执行失败", [
+        "检查 nodes.json 的 host/user/port/key",
+        "在主控机手动 ssh 到该节点验证",
+    ]
+
+
+def run_remote(node: Dict[str, Any], report_args: List[str]) -> Tuple[bool, str]:
+    if not node.get("host"):
+        return False, "节点缺少 host"
+
+    cmd = ssh_cmd_for_node(node, report_args)
     try:
-        out = subprocess.check_output(ssh_cmd, stderr=subprocess.STDOUT, text=True, timeout=180)
-        return out.strip()
+        out = subprocess.check_output(cmd, stderr=subprocess.STDOUT, text=True, timeout=180)
+        return True, out.strip()
     except subprocess.CalledProcessError as e:
-        return f"ERROR(remote):\n{(e.output or str(e)).strip()}"
+        return False, (e.output or str(e)).strip()
     except Exception as e:
-        return f"ERROR(remote): {e}"
+        return False, str(e)
 
 
-def format_remote(node_name: str, body: str) -> str:
+def format_remote_ok(node_name: str, body: str) -> str:
     return f"🛰️ 节点：{node_name}\n{body}"
 
 
-# -------- main loop --------
+def format_remote_fallback(node_name: str, err: str, fallback: str) -> str:
+    reason, tips = classify_ssh_error(err)
+    tip_text = "\n".join(f"- {x}" for x in tips)
+    return (
+        f"❌ 远程查询失败（节点: {node_name}）\n"
+        f"原因：{reason}\n"
+        f"\n建议：\n{tip_text}\n"
+        f"\n---- 自动回落：主控机本地结果 ----\n{fallback}"
+    )
+
+
 def main() -> None:
     cfg = load_json(CFG, {})
     token_file = cfg.get("telegram_bot_token_file", "/opt/traffic-local/tg_bot_token.txt")
@@ -214,8 +260,12 @@ def main() -> None:
                         if not node:
                             send_message(token, chat_id, f"未找到节点：{args[0]}\n发送 /nodes 查看可用节点", thread_id)
                         else:
-                            out = run_remote(node, ["--dry-run"])
-                            send_message(token, chat_id, format_remote(node["name"], out or "(无输出)"), thread_id)
+                            ok, out = run_remote(node, ["--dry-run"])
+                            if ok:
+                                send_message(token, chat_id, format_remote_ok(node["name"], out or "(无输出)"), thread_id)
+                            else:
+                                local_fb = run_local_report(["--dry-run"])
+                                send_message(token, chat_id, format_remote_fallback(node["name"], out, local_fb), thread_id)
                     else:
                         out = run_local_report(["--dry-run"])
                         send_message(token, chat_id, out or "(无输出)", thread_id)
@@ -230,8 +280,12 @@ def main() -> None:
                         if not node:
                             send_message(token, chat_id, f"未找到节点：{args[0]}\n发送 /nodes 查看可用节点", thread_id)
                         else:
-                            out = run_remote(node, ["--self-check"])
-                            send_message(token, chat_id, format_remote(node["name"], out or "(无输出)"), thread_id)
+                            ok, out = run_remote(node, ["--self-check"])
+                            if ok:
+                                send_message(token, chat_id, format_remote_ok(node["name"], out or "(无输出)"), thread_id)
+                            else:
+                                local_fb = run_local_report(["--self-check"])
+                                send_message(token, chat_id, format_remote_fallback(node["name"], out, local_fb), thread_id)
                     else:
                         out = run_local_report(["--self-check"])
                         send_message(token, chat_id, out or "(无输出)", thread_id)
