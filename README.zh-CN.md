@@ -7,6 +7,7 @@
 - `vnstat` 本地采集（每台服务器独立）
 - Python 计算账期流量、历史归档
 - Telegram Bot 推送（可多台共用）
+- 可选 Telegram 命令监听（/traffic /selfcheck 等）
 
 ## 快速安装（root）
 
@@ -15,49 +16,31 @@
 bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/install.sh)
 ```
 
-### 2) 一键安装 + 交互式初始化（推荐，v1.0.2+）
+### 2) 一键安装 + 交互式初始化（推荐）
 ```bash
 INIT=true bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/install.sh)
 ```
 
-安装时会直接询问：
-- 服务器名称
-- 网卡（支持 `auto`）
-- 月限额
-- 账期日/账期时间
-- Telegram chat_id
-- Telegram bot token
+安装时会自动询问并可选启用 Telegram 命令监听。
 
-并自动：
-- 写配置
-- 测试推送一次
-- 让你选择 cron / systemd / none 定时模式
+### 3) 非交互直接启用 Telegram 命令监听
+```bash
+ENABLE_BOT_LISTENER=true bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/install.sh)
+```
 
-## 一键自检（v1.0.3）
-部署完执行：
+## Telegram 命令（v1.0.4）
+启用 listener 后，在你配置的 chat_id 里可用：
+
+- `/traffic`：查看当前流量（等价 `--dry-run`）
+- `/traffic_send`：立即推送一条流量通知
+- `/selfcheck`：执行自检
+- `/help`：命令帮助
+
+> 支持群话题（forum topic），会在当前 topic 回复。
+
+## 一键自检（v1.0.3+）
 ```bash
 python3 /opt/traffic-local/report.py --self-check
-```
-会检查：
-- 配置文件字段
-- token 文件可读性
-- vnstat 与网卡有效性
-- Telegram API 连通性（getMe）
-- 定时器状态（cron/systemd）
-
-## 定时方案
-
-### 方案 A：cron（每天 23:55）
-```bash
-( crontab -l 2>/dev/null | grep -v '/opt/traffic-local/report.py' ; \
-  echo '55 23 * * * /usr/bin/python3 /opt/traffic-local/report.py --send >> /opt/traffic-local/run.log 2>&1' ) | crontab -
-```
-
-### 方案 B：systemd timer（推荐更稳）
-```bash
-ENABLE_SYSTEMD_TIMER=true bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/install.sh)
-systemctl status traffic-local-report.timer
-systemctl list-timers | grep traffic-local-report
 ```
 
 ## 常用命令
@@ -70,12 +53,9 @@ python3 /opt/traffic-local/report.py --dry-run
 python3 /opt/traffic-local/report.py --send
 python3 /opt/traffic-local/report.py --self-check
 
-tail -n 50 /opt/traffic-local/run.log
-cat /opt/traffic-local/state.json
+systemctl status traffic-local-bot.service
+journalctl -u traffic-local-bot.service -n 50 --no-pager
 ```
-
-## 配置字段说明
-见：`config.template.json`
 
 ## 许可证
 MIT

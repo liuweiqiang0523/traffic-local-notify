@@ -10,43 +10,32 @@ Lightweight per-server monthly traffic monitor with vnStat + Python + Telegram n
 - Inbound / outbound / total traffic display
 - Threshold alerts (default: 80/90/100)
 - Manual query + force send
-- Better error messages for common failures
-- Auto interface support (`"interface": "auto"`)
-- Optional `systemd timer` mode
-- Interactive init mode (`INIT=true`)
 - One-shot self-check mode (`--self-check`)
+- Optional `systemd timer` mode
+- Optional Telegram command listener (`/traffic`, `/selfcheck`, ...)
 
 ## Quick Install (root)
 
-### Basic install
+### Basic
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/install.sh)
 ```
 
-### Interactive setup (recommended)
+### Interactive setup
 ```bash
 INIT=true bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/install.sh)
 ```
 
-## Self Check
+### Enable Telegram command listener directly
 ```bash
-python3 /opt/traffic-local/report.py --self-check
+ENABLE_BOT_LISTENER=true bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/install.sh)
 ```
 
-## Scheduling
-
-### Option A: cron (23:55 daily)
-```bash
-( crontab -l 2>/dev/null | grep -v '/opt/traffic-local/report.py' ; \
-  echo '55 23 * * * /usr/bin/python3 /opt/traffic-local/report.py --send >> /opt/traffic-local/run.log 2>&1' ) | crontab -
-```
-
-### Option B: systemd timer
-```bash
-ENABLE_SYSTEMD_TIMER=true bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/install.sh)
-systemctl status traffic-local-report.timer
-systemctl list-timers | grep traffic-local-report
-```
+## Telegram Commands (v1.0.4)
+- `/traffic`
+- `/traffic_send`
+- `/selfcheck`
+- `/help`
 
 ## License
 MIT

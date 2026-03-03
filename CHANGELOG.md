@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.4] - 2026-03-04
+
+### Added
+- Telegram command listener (`bot_listener.py`) with commands:
+  - `/traffic`
+  - `/traffic_send`
+  - `/selfcheck`
+  - `/help`
+- systemd service: `systemd/traffic-local-bot.service`
+- Installer flag: `ENABLE_BOT_LISTENER=true`
+- Interactive installer can optionally enable command listener.
+
+### Changed
+- Uninstaller now also removes bot listener service.
+- Docs updated with Telegram command workflow.
+
 ## [1.0.3] - 2026-03-04
 
 ### Added

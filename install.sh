@@ -17,6 +17,7 @@ RAW_BASE="https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${BRANCH}
 ENABLE_SYSTEMD_TIMER="${ENABLE_SYSTEMD_TIMER:-false}" # true/false
 INIT="${INIT:-false}"                                 # true/false
 SCHEDULE_MODE="${SCHEDULE_MODE:-}"                    # cron/systemd/none
+ENABLE_BOT_LISTENER="${ENABLE_BOT_LISTENER:-false}"       # true/false
 
 need_cmd() { command -v "$1" >/dev/null 2>&1; }
 
@@ -62,6 +63,18 @@ setup_systemd_timer() {
   systemctl daemon-reload
   systemctl enable --now traffic-local-report.timer
   echo "✅ 已启用 systemd timer：traffic-local-report.timer"
+}
+
+setup_bot_listener() {
+  if [ -f "$LOCAL_BOT_SERVICE" ]; then
+    install -m 644 "$LOCAL_BOT_SERVICE" /etc/systemd/system/traffic-local-bot.service
+  else
+    download_file "${RAW_BASE}/systemd/traffic-local-bot.service" "/etc/systemd/system/traffic-local-bot.service"
+  fi
+
+  systemctl daemon-reload
+  systemctl enable --now traffic-local-bot.service
+  echo "✅ 已启用 Telegram 命令监听：traffic-local-bot.service"
 }
 
 write_config_interactive() {
@@ -135,6 +148,8 @@ LOCAL_REPORT="${SCRIPT_DIR}/report.py"
 LOCAL_CONFIG="${SCRIPT_DIR}/config.template.json"
 LOCAL_SERVICE="${SCRIPT_DIR}/systemd/traffic-local-report.service"
 LOCAL_TIMER="${SCRIPT_DIR}/systemd/traffic-local-report.timer"
+LOCAL_BOT="${SCRIPT_DIR}/bot_listener.py"
+LOCAL_BOT_SERVICE="${SCRIPT_DIR}/systemd/traffic-local-bot.service"
 
 # 支持两种安装方式：
 # 1) git clone 后执行 ./install.sh（本地文件存在）
@@ -148,6 +163,14 @@ else
   download_file "${RAW_BASE}/config.template.json" "$TMPDIR/config.template.json"
   install -m 755 "$TMPDIR/report.py" /opt/traffic-local/report.py
   [ -f /opt/traffic-local/config.json ] || install -m 600 "$TMPDIR/config.template.json" /opt/traffic-local/config.json
+fi
+
+# 安装 bot listener（Telegram 命令监听）
+if [ -n "$SCRIPT_DIR" ] && [ -f "$LOCAL_BOT" ]; then
+  install -m 755 "$LOCAL_BOT" /opt/traffic-local/bot_listener.py
+else
+  download_file "${RAW_BASE}/bot_listener.py" "/opt/traffic-local/bot_listener.py"
+  chmod 755 /opt/traffic-local/bot_listener.py
 fi
 
 if [ ! -f /opt/traffic-local/tg_bot_token.txt ]; then
@@ -202,8 +225,22 @@ if [ "$INIT" = "true" ]; then
       ;;
   esac
 
+  read -r -p "启用 Telegram 命令监听? [y/N]: " enable_listener || true
+  case "${enable_listener:-n}" in
+    y|Y|yes|YES)
+      setup_bot_listener
+      ;;
+    *)
+      echo "未启用 Telegram 命令监听"
+      ;;
+  esac
+
 elif [ "$ENABLE_SYSTEMD_TIMER" = "true" ]; then
   setup_systemd_timer "$LOCAL_SERVICE" "$LOCAL_TIMER"
+fi
+
+if [ "$ENABLE_BOT_LISTENER" = "true" ]; then
+  setup_bot_listener
 fi
 
 echo
@@ -211,9 +248,13 @@ echo "安装完成。"
 echo "常用命令："
 echo "  python3 /opt/traffic-local/report.py --dry-run"
 echo "  python3 /opt/traffic-local/report.py --send"
+echo "  python3 /opt/traffic-local/report.py --self-check"
 echo
 cat <<'CRON_HINT'
 若你要手动使用 cron（23:55）：
   ( crontab -l 2>/dev/null | grep -v '/opt/traffic-local/report.py' ; \
     echo '55 23 * * * /usr/bin/python3 /opt/traffic-local/report.py --send >> /opt/traffic-local/run.log 2>&1' ) | crontab -
 CRON_HINT
+echo
+echo "启用 Telegram 命令监听（可选）："
+echo "  ENABLE_BOT_LISTENER=true bash <(curl -fsSL ${RAW_BASE}/install.sh)"
