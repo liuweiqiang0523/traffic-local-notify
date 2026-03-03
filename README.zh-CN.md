@@ -9,16 +9,29 @@
 - Telegram Bot 推送（可多台共用）
 
 ## 快速安装（root）
+
+### 1) 一键安装（基础模式）
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/install.sh)
 ```
 
-安装后：
+### 2) 一键安装 + 交互式初始化（推荐，v1.0.2）
 ```bash
-nano /opt/traffic-local/config.json
-nano /opt/traffic-local/tg_bot_token.txt
-python3 /opt/traffic-local/report.py --send
+INIT=true bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/install.sh)
 ```
+
+安装时会直接询问：
+- 服务器名称
+- 网卡（支持 `auto`）
+- 月限额
+- 账期日/账期时间
+- Telegram chat_id
+- Telegram bot token
+
+并自动：
+- 写配置
+- 测试推送一次
+- 让你选择 cron / systemd / none 定时模式
 
 ## 定时方案
 
@@ -40,9 +53,18 @@ systemctl list-timers | grep traffic-local-report
 traffic        # 仅本地查看（dry-run）
 traffic-send   # 立即推送一次
 
+python3 /opt/traffic-local/report.py --show-config
+python3 /opt/traffic-local/report.py --dry-run
+python3 /opt/traffic-local/report.py --send
+
 tail -n 50 /opt/traffic-local/run.log
 cat /opt/traffic-local/state.json
 ```
+
+## 新特性（v1.0.2）
+- 交互式初始化：`INIT=true`
+- 安装后自动测试推送
+- 安装时可选定时方式（cron/systemd/none）
 
 ## 新特性（v1.0.1）
 - 支持 `interface: auto` 自动网卡检测
