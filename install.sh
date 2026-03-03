@@ -105,7 +105,9 @@ if [ "$ENABLE_SYSTEMD_TIMER" = "true" ]; then
   echo "查看下次触发: systemctl list-timers | grep traffic-local-report"
 else
   echo "可选 A（cron 23:55）："
-  echo "  ( crontab -l 2>/dev/null | grep -v '/opt/traffic-local/report.py' ; \\" 
-  echo "    echo '55 23 * * * /usr/bin/python3 /opt/traffic-local/report.py --send >> /opt/traffic-local/run.log 2>&1' ) | crontab -"
+  cat <<'CRON'
+  ( crontab -l 2>/dev/null | grep -v '/opt/traffic-local/report.py' ; \
+    echo '55 23 * * * /usr/bin/python3 /opt/traffic-local/report.py --send >> /opt/traffic-local/run.log 2>&1' ) | crontab -
+CRON
   echo "可选 B（systemd timer）：ENABLE_SYSTEMD_TIMER=true bash <(curl -fsSL ${RAW_BASE}/install.sh)"
 fi
