@@ -1,0 +1,10 @@
+[Unit]
+Description=Run traffic-local-notify daily at 23:55
+
+[Timer]
+OnCalendar=*-*-* 23:55:00
+Persistent=true
+Unit=traffic-local-report.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,9 @@
+[Unit]
+Description=traffic-local-notify report runner
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /opt/traffic-local/report.py --send
+User=root

@@ -12,14 +12,12 @@ REPO_OWNER="${REPO_OWNER:-liuweiqiang0523}"
 REPO_NAME="${REPO_NAME:-traffic-local-notify}"
 BRANCH="${BRANCH:-main}"
 RAW_BASE="https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${BRANCH}"
+ENABLE_SYSTEMD_TIMER="${ENABLE_SYSTEMD_TIMER:-false}" # true/false
 
-need_cmd() {
-  command -v "$1" >/dev/null 2>&1 || return 1
-}
+need_cmd() { command -v "$1" >/dev/null 2>&1; }
 
 download_file() {
-  local url="$1"
-  local out="$2"
+  local url="$1" out="$2"
   if need_cmd curl; then
     curl -fsSL "$url" -o "$out"
   elif need_cmd wget; then
@@ -44,6 +42,8 @@ trap 'rm -rf "$TMPDIR"' EXIT
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd 2>/dev/null || true)"
 LOCAL_REPORT="${SCRIPT_DIR}/report.py"
 LOCAL_CONFIG="${SCRIPT_DIR}/config.template.json"
+LOCAL_SERVICE="${SCRIPT_DIR}/systemd/traffic-local-report.service"
+LOCAL_TIMER="${SCRIPT_DIR}/systemd/traffic-local-report.timer"
 
 # 支持两种安装方式：
 # 1) git clone 后执行 ./install.sh（本地文件存在）
@@ -72,11 +72,40 @@ alias traffic-send='python3 /opt/traffic-local/report.py --send'
 E2
 fi
 
+if [ "$ENABLE_SYSTEMD_TIMER" = "true" ]; then
+  echo "启用 systemd timer 模式..."
+  if [ -f "$LOCAL_SERVICE" ] && [ -f "$LOCAL_TIMER" ]; then
+    install -m 644 "$LOCAL_SERVICE" /etc/systemd/system/traffic-local-report.service
+    install -m 644 "$LOCAL_TIMER" /etc/systemd/system/traffic-local-report.timer
+  else
+    download_file "${RAW_BASE}/systemd/traffic-local-report.service" "/etc/systemd/system/traffic-local-report.service"
+    download_file "${RAW_BASE}/systemd/traffic-local-report.timer" "/etc/systemd/system/traffic-local-report.timer"
+  fi
+
+  # 清理 cron 旧任务
+  crontab -l 2>/dev/null | grep -v '/opt/traffic-local/report.py' | crontab - || true
+
+  systemctl daemon-reload
+  systemctl enable --now traffic-local-report.timer
+else
+  # 默认给出 cron（不强制写入，避免覆盖用户习惯）
+  true
+fi
+
 echo
 echo "安装完成，下一步："
 echo "1) 编辑配置: nano /opt/traffic-local/config.json"
 echo "2) 写入Token: nano /opt/traffic-local/tg_bot_token.txt"
 echo "3) 测试推送: python3 /opt/traffic-local/report.py --send"
-echo "4) 配cron(23:55):"
-echo "   ( crontab -l 2>/dev/null | grep -v '/opt/traffic-local/report.py' ; \\\" 
-echo "     echo '55 23 * * * /usr/bin/python3 /opt/traffic-local/report.py --send >> /opt/traffic-local/run.log 2>&1' ) | crontab -"
+
+echo
+if [ "$ENABLE_SYSTEMD_TIMER" = "true" ]; then
+  echo "✅ 已启用 systemd timer：traffic-local-report.timer"
+  echo "查看状态: systemctl status traffic-local-report.timer"
+  echo "查看下次触发: systemctl list-timers | grep traffic-local-report"
+else
+  echo "可选 A（cron 23:55）："
+  echo "  ( crontab -l 2>/dev/null | grep -v '/opt/traffic-local/report.py' ; \\" 
+  echo "    echo '55 23 * * * /usr/bin/python3 /opt/traffic-local/report.py --send >> /opt/traffic-local/run.log 2>&1' ) | crontab -"
+  echo "可选 B（systemd timer）：ENABLE_SYSTEMD_TIMER=true bash <(curl -fsSL ${RAW_BASE}/install.sh)"
+fi

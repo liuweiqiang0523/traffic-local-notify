@@ -1,6 +1,6 @@
 {
   "server_name": "my-vps-01",
-  "interface": "eth0",
+  "interface": "auto",
   "limit_gb": 25600,
   "billing_day": 27,
   "billing_hms": "00:02:06",

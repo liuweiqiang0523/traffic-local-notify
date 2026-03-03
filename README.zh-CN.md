@@ -20,10 +20,19 @@ nano /opt/traffic-local/tg_bot_token.txt
 python3 /opt/traffic-local/report.py --send
 ```
 
-## 每天 23:55 定时推送
+## 定时方案
+
+### 方案 A：cron（每天 23:55）
 ```bash
 ( crontab -l 2>/dev/null | grep -v '/opt/traffic-local/report.py' ; \
   echo '55 23 * * * /usr/bin/python3 /opt/traffic-local/report.py --send >> /opt/traffic-local/run.log 2>&1' ) | crontab -
+```
+
+### 方案 B：systemd timer（推荐更稳）
+```bash
+ENABLE_SYSTEMD_TIMER=true bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/install.sh)
+systemctl status traffic-local-report.timer
+systemctl list-timers | grep traffic-local-report
 ```
 
 ## 常用命令
@@ -34,6 +43,11 @@ traffic-send   # 立即推送一次
 tail -n 50 /opt/traffic-local/run.log
 cat /opt/traffic-local/state.json
 ```
+
+## 新特性（v1.0.1）
+- 支持 `interface: auto` 自动网卡检测
+- 错误提示更详细（vnstat/JSON/Telegram）
+- 新增 systemd timer 模板
 
 ## 配置字段说明
 见：`config.template.json`

@@ -10,7 +10,9 @@ Lightweight per-server monthly traffic monitor with vnStat + Python + Telegram n
 - Inbound / outbound / total traffic display
 - Threshold alerts (default: 80/90/100)
 - Manual query + force send
-- Works with one shared Telegram bot across many servers
+- Better error messages for common failures
+- Auto interface support (`"interface": "auto"`)
+- Optional `systemd timer` mode
 
 ## Quick Install (root)
 ```bash
@@ -24,10 +26,19 @@ nano /opt/traffic-local/tg_bot_token.txt
 python3 /opt/traffic-local/report.py --send
 ```
 
-## Schedule (23:55 daily)
+## Scheduling
+
+### Option A: cron (23:55 daily)
 ```bash
 ( crontab -l 2>/dev/null | grep -v '/opt/traffic-local/report.py' ; \
   echo '55 23 * * * /usr/bin/python3 /opt/traffic-local/report.py --send >> /opt/traffic-local/run.log 2>&1' ) | crontab -
+```
+
+### Option B: systemd timer
+```bash
+ENABLE_SYSTEMD_TIMER=true bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/install.sh)
+systemctl status traffic-local-report.timer
+systemctl list-timers | grep traffic-local-report
 ```
 
 ## License
