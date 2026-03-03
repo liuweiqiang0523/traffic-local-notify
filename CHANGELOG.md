@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.6] - 2026-03-04
+
+### Added
+- Non-interactive env-driven install mode in `install.sh` via:
+  - `SERVER_NAME`
+  - `LIMIT_GB`
+  - `CHAT_ID`
+  - `BOT_TOKEN`
+  - optional `IFACE`, `BILLING_DAY`, `BILLING_HMS`, `SCHEDULE_MODE`, `ENABLE_BOT_LISTENER`
+- Supports one-line fully automated deployment without manual prompts.
+
 ## [1.0.4] - 2026-03-04
 
 ### Added

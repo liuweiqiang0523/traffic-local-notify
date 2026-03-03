@@ -19,6 +19,15 @@ INIT="${INIT:-false}"                                 # true/false
 SCHEDULE_MODE="${SCHEDULE_MODE:-}"                    # cron/systemd/none
 ENABLE_BOT_LISTENER="${ENABLE_BOT_LISTENER:-false}"       # true/false
 
+# non-interactive config via env (v1.0.6)
+SERVER_NAME="${SERVER_NAME:-}"
+IFACE="${IFACE:-auto}"
+LIMIT_GB="${LIMIT_GB:-}"
+BILLING_DAY="${BILLING_DAY:-27}"
+BILLING_HMS="${BILLING_HMS:-00:02:06}"
+CHAT_ID="${CHAT_ID:-}"
+BOT_TOKEN="${BOT_TOKEN:-}"
+
 need_cmd() { command -v "$1" >/dev/null 2>&1; }
 
 download_file() {
@@ -75,6 +84,33 @@ setup_bot_listener() {
   systemctl daemon-reload
   systemctl enable --now traffic-local-bot.service
   echo "✅ 已启用 Telegram 命令监听：traffic-local-bot.service"
+}
+
+write_config_from_env() {
+  if [ -z "$SERVER_NAME" ] || [ -z "$LIMIT_GB" ] || [ -z "$CHAT_ID" ] || [ -z "$BOT_TOKEN" ]; then
+    echo "❌ 环境变量模式缺少必要参数（需要 SERVER_NAME/LIMIT_GB/CHAT_ID/BOT_TOKEN）"
+    exit 1
+  fi
+
+  cat > /opt/traffic-local/config.json <<JSON
+{
+  "server_name": "${SERVER_NAME}",
+  "interface": "${IFACE}",
+  "limit_gb": ${LIMIT_GB},
+  "billing_day": ${BILLING_DAY},
+  "billing_hms": "${BILLING_HMS}",
+  "telegram_bot_token_file": "/opt/traffic-local/tg_bot_token.txt",
+  "telegram_chat_id": "${CHAT_ID}",
+  "send_always": false,
+  "alert_levels": [80, 90, 100]
+}
+JSON
+
+  printf "%s
+" "$BOT_TOKEN" > /opt/traffic-local/tg_bot_token.txt
+  chmod 600 /opt/traffic-local/tg_bot_token.txt
+
+  echo "✅ 已按环境变量写入配置与 token"
 }
 
 write_config_interactive() {
@@ -186,7 +222,11 @@ E2
 fi
 
 if [ "$INIT" = "true" ]; then
-  write_config_interactive
+  if [ -n "$SERVER_NAME" ] || [ -n "$LIMIT_GB" ] || [ -n "$CHAT_ID" ] || [ -n "$BOT_TOKEN" ]; then
+    write_config_from_env
+  else
+    write_config_interactive
+  fi
 
   echo
   echo "正在执行一次测试推送..."
@@ -258,3 +298,9 @@ CRON_HINT
 echo
 echo "启用 Telegram 命令监听（可选）："
 echo "  ENABLE_BOT_LISTENER=true bash <(curl -fsSL ${RAW_BASE}/install.sh)"
+
+echo
+cat <<'ENV_HINT'
+环境变量一条命令安装（免交互）示例：
+  SERVER_NAME="vps-01" LIMIT_GB="25600" CHAT_ID="-100xxxx" BOT_TOKEN="123:abc"   SCHEDULE_MODE="cron" ENABLE_BOT_LISTENER="true" INIT=true   bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/install.sh)
+ENV_HINT

@@ -11,6 +11,13 @@
 
 ## 快速安装（root）
 
+### 0) 一条命令免交互（推荐批量部署，v1.0.6）
+```bash
+SERVER_NAME="vps-01" LIMIT_GB="25600" CHAT_ID="-100xxxx" BOT_TOKEN="123:abc" \
+SCHEDULE_MODE="cron" ENABLE_BOT_LISTENER="true" INIT=true \
+bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/install.sh)
+```
+
 ### 1) 一键安装（基础模式）
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/install.sh)

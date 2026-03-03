@@ -16,6 +16,14 @@ Lightweight per-server monthly traffic monitor with vnStat + Python + Telegram n
 
 ## Quick Install (root)
 
+### One-line non-interactive (v1.0.6)
+```bash
+SERVER_NAME="vps-01" LIMIT_GB="25600" CHAT_ID="-100xxxx" BOT_TOKEN="123:abc" \
+SCHEDULE_MODE="cron" ENABLE_BOT_LISTENER="true" INIT=true \
+bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/install.sh)
+```
+
+
 ### Basic
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/install.sh)
