@@ -1,11 +1,11 @@
 {
-"server_name": "my-vps-01",
-"interface": "eth0",
-"limit_gb": 25600,
-"billing_day": 27,
-"billing_hms": "00:02:06",
-"telegram_bot_token_file": "/opt/traffic-local/tg_bot_token.txt",
-"telegram_chat_id": "-100xxxxxxxxxx",
-"send_always": false,
-"alert_levels": [80, 90, 100]
+  "server_name": "my-vps-01",
+  "interface": "eth0",
+  "limit_gb": 25600,
+  "billing_day": 27,
+  "billing_hms": "00:02:06",
+  "telegram_bot_token_file": "/opt/traffic-local/tg_bot_token.txt",
+  "telegram_chat_id": "-100xxxxxxxxxx",
+  "send_always": false,
+  "alert_levels": [80, 90, 100]
 }

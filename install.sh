@@ -41,14 +41,14 @@ chmod 700 /opt/traffic-local
 TMPDIR="$(mktemp -d)"
 trap 'rm -rf "$TMPDIR"' EXIT
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd 2>/dev/null || echo "")"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd 2>/dev/null || true)"
 LOCAL_REPORT="${SCRIPT_DIR}/report.py"
 LOCAL_CONFIG="${SCRIPT_DIR}/config.template.json"
 
 # 支持两种安装方式：
 # 1) git clone 后执行 ./install.sh（本地文件存在）
 # 2) bash <(curl .../install.sh)（本地文件不存在，自动在线拉取）
-if [ -f "$LOCAL_REPORT" ] && [ -f "$LOCAL_CONFIG" ]; then
+if [ -n "$SCRIPT_DIR" ] && [ -f "$LOCAL_REPORT" ] && [ -f "$LOCAL_CONFIG" ]; then
   install -m 755 "$LOCAL_REPORT" /opt/traffic-local/report.py
   [ -f /opt/traffic-local/config.json ] || install -m 600 "$LOCAL_CONFIG" /opt/traffic-local/config.json
 else
@@ -78,5 +78,5 @@ echo "1) 编辑配置: nano /opt/traffic-local/config.json"
 echo "2) 写入Token: nano /opt/traffic-local/tg_bot_token.txt"
 echo "3) 测试推送: python3 /opt/traffic-local/report.py --send"
 echo "4) 配cron(23:55):"
-echo "   ( crontab -l 2>/dev/null | grep -v '/opt/traffic-local/report.py' ; \\" 
+echo "   ( crontab -l 2>/dev/null | grep -v '/opt/traffic-local/report.py' ; \\\" 
 echo "     echo '55 23 * * * /usr/bin/python3 /opt/traffic-local/report.py --send >> /opt/traffic-local/run.log 2>&1' ) | crontab -"
