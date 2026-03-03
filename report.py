@@ -52,6 +52,17 @@ def fmt(ts: int) -> str:
     return datetime.datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M:%S")
 
 
+def human_traffic(v: float) -> str:
+    t = tb(v)
+    if t >= 0.01:
+        return f"{t:>8.2f} TB"
+    g = gb(v)
+    if g >= 0.01:
+        return f"{g:>8.2f} GB"
+    m = v / (1024 ** 2)
+    return f"{m:>8.2f} MB"
+
+
 def cycle_start(now: datetime.datetime, day: int, hms: str) -> datetime.datetime:
     h, m, s = map(int, hms.split(":"))
     current = datetime.datetime(now.year, now.month, day, h, m, s, tzinfo=now.tzinfo)
@@ -135,9 +146,9 @@ def build_message(cfg: Dict[str, Any], st: Dict[str, Any], cur_rx: int, cur_tx: 
         f"🖥️ 服务器：{cfg['server_name']}\n"
         f"🕐 周期起始：{fmt(st['cycle_start_ts'])}\n"
         f"🌐 网卡：{cfg['interface']}\n"
-        f"⬇️ 入站流量：{tb(cur_rx):>8.2f} TB\n"
-        f"⬆️ 出站流量：{tb(cur_tx):>8.2f} TB\n"
-        f"📈 已用流量：{tb(cur_sum):>8.2f} TB\n"
+        f"⬇️ 入站流量：{human_traffic(cur_rx)}\n"
+        f"⬆️ 出站流量：{human_traffic(cur_tx)}\n"
+        f"📈 已用流量：{human_traffic(cur_sum)}\n"
         f"📊 流量限额：{limit_gb:>8,.0f} GB（{pct:>5.1f}%）\n"
         f"📋 历史流量：\n"
     )
