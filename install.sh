@@ -176,9 +176,16 @@ if [ "$INIT" = "true" ]; then
 
   echo
   if [ -z "$SCHEDULE_MODE" ]; then
-    read -r -p "选择定时方式 [cron/systemd/none] (默认 cron): " SCHEDULE_MODE
-    SCHEDULE_MODE="${SCHEDULE_MODE:-cron}"
+    if [ -t 0 ]; then
+      read -r -p "选择定时方式 [cron/systemd/none] (默认 cron): " SCHEDULE_MODE || true
+      SCHEDULE_MODE="${SCHEDULE_MODE:-cron}"
+    else
+      SCHEDULE_MODE="cron"
+      echo "未检测到交互终端，默认使用 cron"
+    fi
   fi
+
+  SCHEDULE_MODE="$(printf '%s' "$SCHEDULE_MODE" | tr '[:upper:]' '[:lower:]' | xargs)"
 
   case "$SCHEDULE_MODE" in
     cron)
