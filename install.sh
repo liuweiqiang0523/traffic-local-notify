@@ -27,6 +27,7 @@ BILLING_DAY="${BILLING_DAY:-27}"
 BILLING_HMS="${BILLING_HMS:-00:02:06}"
 CHAT_ID="${CHAT_ID:-}"
 BOT_TOKEN="${BOT_TOKEN:-}"
+DEPLOY_ROLE="${DEPLOY_ROLE:-worker}" # master|worker
 
 need_cmd() { command -v "$1" >/dev/null 2>&1; }
 
@@ -84,6 +85,7 @@ setup_bot_listener() {
   systemctl daemon-reload
   systemctl enable --now traffic-local-bot.service
   echo "✅ 已启用 Telegram 命令监听：traffic-local-bot.service"
+  echo "   节点清单文件：/opt/traffic-local/nodes.json"
 }
 
 write_config_from_env() {
@@ -106,8 +108,7 @@ write_config_from_env() {
 }
 JSON
 
-  printf "%s
-" "$BOT_TOKEN" > /opt/traffic-local/tg_bot_token.txt
+  printf "%s\n" "$BOT_TOKEN" > /opt/traffic-local/tg_bot_token.txt
   chmod 600 /opt/traffic-local/tg_bot_token.txt
 
   echo "✅ 已按环境变量写入配置与 token"
@@ -186,6 +187,7 @@ LOCAL_SERVICE="${SCRIPT_DIR}/systemd/traffic-local-report.service"
 LOCAL_TIMER="${SCRIPT_DIR}/systemd/traffic-local-report.timer"
 LOCAL_BOT="${SCRIPT_DIR}/bot_listener.py"
 LOCAL_BOT_SERVICE="${SCRIPT_DIR}/systemd/traffic-local-bot.service"
+LOCAL_NODES_EXAMPLE="${SCRIPT_DIR}/nodes.example.json"
 
 # 支持两种安装方式：
 # 1) git clone 后执行 ./install.sh（本地文件存在）
@@ -209,6 +211,16 @@ else
   chmod 755 /opt/traffic-local/bot_listener.py
 fi
 
+# 节点清单模板（仅主控机需要）
+if [ ! -f /opt/traffic-local/nodes.json ]; then
+  if [ -n "$SCRIPT_DIR" ] && [ -f "$LOCAL_NODES_EXAMPLE" ]; then
+    install -m 600 "$LOCAL_NODES_EXAMPLE" /opt/traffic-local/nodes.json
+  else
+    download_file "${RAW_BASE}/nodes.example.json" "/opt/traffic-local/nodes.json"
+    chmod 600 /opt/traffic-local/nodes.json
+  fi
+fi
+
 if [ ! -f /opt/traffic-local/tg_bot_token.txt ]; then
   touch /opt/traffic-local/tg_bot_token.txt
   chmod 600 /opt/traffic-local/tg_bot_token.txt
@@ -219,6 +231,14 @@ if ! grep -q "alias traffic='python3 /opt/traffic-local/report.py --dry-run'" /r
 alias traffic='python3 /opt/traffic-local/report.py --dry-run'
 alias traffic-send='python3 /opt/traffic-local/report.py --send'
 E2
+fi
+
+# 角色策略：master 负责命令监听，worker 仅定时上报
+DEPLOY_ROLE="$(printf '%s' "$DEPLOY_ROLE" | tr '[:upper:]' '[:lower:]' | xargs)"
+if [ "$DEPLOY_ROLE" = "master" ]; then
+  ENABLE_BOT_LISTENER="true"
+elif [ "$DEPLOY_ROLE" = "worker" ]; then
+  ENABLE_BOT_LISTENER="false"
 fi
 
 if [ "$INIT" = "true" ]; then
@@ -265,15 +285,21 @@ if [ "$INIT" = "true" ]; then
       ;;
   esac
 
-  read -r -p "启用 Telegram 命令监听? [y/N]: " enable_listener || true
-  case "${enable_listener:-n}" in
-    y|Y|yes|YES)
-      setup_bot_listener
-      ;;
-    *)
-      echo "未启用 Telegram 命令监听"
-      ;;
-  esac
+  if [ "$DEPLOY_ROLE" = "master" ]; then
+    setup_bot_listener
+  elif [ "$DEPLOY_ROLE" = "worker" ]; then
+    echo "worker 角色默认不启用 Telegram 命令监听"
+  else
+    read -r -p "启用 Telegram 命令监听? [y/N]: " enable_listener || true
+    case "${enable_listener:-n}" in
+      y|Y|yes|YES)
+        setup_bot_listener
+        ;;
+      *)
+        echo "未启用 Telegram 命令监听"
+        ;;
+    esac
+  fi
 
 elif [ "$ENABLE_SYSTEMD_TIMER" = "true" ]; then
   setup_systemd_timer "$LOCAL_SERVICE" "$LOCAL_TIMER"
@@ -281,6 +307,8 @@ fi
 
 if [ "$ENABLE_BOT_LISTENER" = "true" ]; then
   setup_bot_listener
+else
+  systemctl disable --now traffic-local-bot.service 2>/dev/null || true
 fi
 
 echo
@@ -304,3 +332,12 @@ cat <<'ENV_HINT'
 环境变量一条命令安装（免交互）示例：
   SERVER_NAME="vps-01" LIMIT_GB="25600" CHAT_ID="-100xxxx" BOT_TOKEN="123:abc"   SCHEDULE_MODE="cron" ENABLE_BOT_LISTENER="true" INIT=true   bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/install.sh)
 ENV_HINT
+
+cat <<'MASTER_CMD_HINT'
+推荐部署方式：
+  主控机（监听+远程查询）：
+    DEPLOY_ROLE="master" INIT=true SCHEDULE_MODE="cron" SERVER_NAME="master" LIMIT_GB="25600" CHAT_ID="-100xxxx" BOT_TOKEN="123:abc" bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/install.sh)
+
+  工作机（仅定时上报，不监听命令）：
+    DEPLOY_ROLE="worker" INIT=true SCHEDULE_MODE="cron" SERVER_NAME="vps-01" LIMIT_GB="25600" CHAT_ID="-100xxxx" BOT_TOKEN="123:abc" bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/install.sh)
+MASTER_CMD_HINT

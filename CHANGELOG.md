@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.7] - 2026-03-04
+
+### Added
+- Master/worker deployment role model (`DEPLOY_ROLE=master|worker`).
+- Master-oriented command listener with remote query support via SSH.
+- New Telegram commands:
+  - `/nodes`
+  - `/traffic <node>`
+  - `/selfcheck <node>`
+- Node inventory template: `nodes.example.json`.
+
+### Changed
+- Installer role-aware behavior:
+  - master enables bot listener by default
+  - worker disables bot listener by default
+- Report message now includes host node name.
+- Docs restructured around multi-node best practice.
+
 ## [1.0.6] - 2026-03-04
 
 ### Added
@@ -70,20 +88,9 @@ All notable changes to this project will be documented in this file.
 - Installer flag: `ENABLE_SYSTEMD_TIMER=true`.
 
 ### Changed
-- Improved runtime error messages:
-  - vnstat command failures
-  - JSON parse failures
-  - missing fields / invalid config
-  - Telegram push failures
-- README and README.zh-CN updated with cron + systemd modes.
-- Installer hardened for both `git clone` and `curl` one-line mode.
+- Improved runtime error messages.
 
 ## [1.0.0] - 2026-03-04
 
 ### Added
 - Initial public release.
-- One-line installer support: `bash <(curl -fsSL .../install.sh)`.
-- Local vnStat-based monthly traffic reporting (`report.py`).
-- Telegram notification support with threshold alerts.
-- Config template with billing cycle and alert levels.
-- Uninstaller script.

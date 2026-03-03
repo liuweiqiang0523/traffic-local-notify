@@ -1,27 +1,33 @@
 #!/usr/bin/env python3
-"""Telegram command listener for traffic-local-notify.
+"""Telegram command listener for traffic-local-notify (master-only).
 
-Commands:
-- /traffic      -> run report.py --dry-run and reply in chat/topic
-- /traffic_send -> run report.py --send (push report)
-- /selfcheck    -> run report.py --self-check and reply
-- /help         -> show command help
+Master mode supports remote node query via SSH:
+- /traffic                 -> local report dry-run
+- /traffic_send            -> local report send
+- /selfcheck               -> local self-check
+- /nodes                   -> list configured nodes
+- /traffic <node>          -> query remote node dry-run
+- /selfcheck <node>        -> remote self-check
+- /help                    -> command help
 """
 
 import json
 import os
+import shlex
 import subprocess
 import time
 import urllib.parse
 import urllib.request
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 CFG = "/opt/traffic-local/config.json"
 OFFSET_FILE = "/opt/traffic-local/bot.offset"
 REPORT = "/opt/traffic-local/report.py"
+NODES = "/opt/traffic-local/nodes.json"
 
 
-def load_json(path: str, default: Dict[str, Any]) -> Dict[str, Any]:
+# -------- utils --------
+def load_json(path: str, default: Any):
     if not os.path.exists(path):
         return default
     with open(path, "r", encoding="utf-8") as f:
@@ -60,7 +66,15 @@ def send_message(token: str, chat_id: str, text: str, thread_id: Optional[int] =
         api_request(token, "sendMessage", payload)
 
 
-def run_report(args: list[str]) -> str:
+def parse_command(text: str) -> tuple[str, List[str]]:
+    parts = text.strip().split()
+    if not parts:
+        return "", []
+    cmd = parts[0].split("@")[0].lower()
+    return cmd, parts[1:]
+
+
+def run_local_report(args: List[str]) -> str:
     cmd = ["python3", REPORT] + args
     try:
         out = subprocess.check_output(cmd, stderr=subprocess.STDOUT, text=True, timeout=120)
@@ -71,12 +85,67 @@ def run_report(args: list[str]) -> str:
         return f"ERROR: {e}"
 
 
-def parse_command(text: str) -> str:
-    first = text.strip().split()[0] if text.strip() else ""
-    cmd = first.split("@")[0].lower()
-    return cmd
+# -------- remote via ssh --------
+def load_nodes() -> List[Dict[str, Any]]:
+    return load_json(NODES, [])
 
 
+def find_node(name: str) -> Optional[Dict[str, Any]]:
+    nodes = load_nodes()
+    q = name.strip().lower()
+    for n in nodes:
+        if str(n.get("name", "")).lower() == q:
+            return n
+    return None
+
+
+def node_list_text() -> str:
+    nodes = load_nodes()
+    if not nodes:
+        return "暂无 nodes.json（/opt/traffic-local/nodes.json）配置。"
+    lines = ["可查询节点："]
+    for n in nodes:
+        lines.append(f"- {n.get('name')} ({n.get('host')}:{n.get('port',22)})")
+    return "\n".join(lines)
+
+
+def run_remote(node: Dict[str, Any], report_args: List[str]) -> str:
+    host = node.get("host")
+    user = node.get("user", "root")
+    port = int(node.get("port", 22))
+    key = node.get("key", "")
+
+    if not host:
+        return "ERROR: 节点缺少 host"
+
+    remote_cmd = "python3 /opt/traffic-local/report.py " + " ".join(shlex.quote(a) for a in report_args)
+    ssh_cmd = [
+        "ssh",
+        "-o",
+        "BatchMode=yes",
+        "-o",
+        "StrictHostKeyChecking=accept-new",
+        "-p",
+        str(port),
+    ]
+    if key:
+        ssh_cmd += ["-i", key]
+    ssh_cmd += [f"{user}@{host}", remote_cmd]
+
+    try:
+        out = subprocess.check_output(ssh_cmd, stderr=subprocess.STDOUT, text=True, timeout=180)
+        return out.strip()
+    except subprocess.CalledProcessError as e:
+        return f"ERROR(remote):\n{(e.output or str(e)).strip()}"
+    except Exception as e:
+        return f"ERROR(remote): {e}"
+
+
+def format_remote(node_name: str, body: str) -> str:
+    return f"🛰️ 节点：{node_name}\n{body}"
+
+
+# -------- main loop --------
 def main() -> None:
     cfg = load_json(CFG, {})
     token_file = cfg.get("telegram_bot_token_file", "/opt/traffic-local/tg_bot_token.txt")
@@ -95,19 +164,26 @@ def main() -> None:
 
     help_text = (
         "可用命令：\n"
-        "/traffic - 查看当前流量\n"
-        "/traffic_send - 立即推送一条流量通知\n"
-        "/selfcheck - 执行自检\n"
+        "/traffic - 查看主控机当前流量\n"
+        "/traffic <node> - 查看指定节点流量\n"
+        "/traffic_send - 主控机立即推送一条通知\n"
+        "/selfcheck - 主控机自检\n"
+        "/selfcheck <node> - 指定节点自检\n"
+        "/nodes - 列出可查询节点\n"
         "/help - 查看帮助"
     )
 
     while True:
         try:
-            res = api_request(token, "getUpdates", {
-                "timeout": "60",
-                "offset": str(offset),
-                "allowed_updates": json.dumps(["message"]),
-            })
+            res = api_request(
+                token,
+                "getUpdates",
+                {
+                    "timeout": "60",
+                    "offset": str(offset),
+                    "allowed_updates": json.dumps(["message"]),
+                },
+            )
             if not res.get("ok"):
                 time.sleep(3)
                 continue
@@ -130,19 +206,42 @@ def main() -> None:
                     continue
 
                 thread_id = msg.get("message_thread_id")
-                cmd = parse_command(text)
+                cmd, args = parse_command(text)
 
                 if cmd == "/traffic":
-                    out = run_report(["--dry-run"])
-                    send_message(token, chat_id, out or "(无输出)", thread_id)
+                    if args:
+                        node = find_node(args[0])
+                        if not node:
+                            send_message(token, chat_id, f"未找到节点：{args[0]}\n发送 /nodes 查看可用节点", thread_id)
+                        else:
+                            out = run_remote(node, ["--dry-run"])
+                            send_message(token, chat_id, format_remote(node["name"], out or "(无输出)"), thread_id)
+                    else:
+                        out = run_local_report(["--dry-run"])
+                        send_message(token, chat_id, out or "(无输出)", thread_id)
+
                 elif cmd == "/traffic_send":
-                    _ = run_report(["--send"])
-                    send_message(token, chat_id, "✅ 已触发推送", thread_id)
+                    _ = run_local_report(["--send"])
+                    send_message(token, chat_id, "✅ 已触发主控机推送", thread_id)
+
                 elif cmd == "/selfcheck":
-                    out = run_report(["--self-check"])
-                    send_message(token, chat_id, out or "(无输出)", thread_id)
+                    if args:
+                        node = find_node(args[0])
+                        if not node:
+                            send_message(token, chat_id, f"未找到节点：{args[0]}\n发送 /nodes 查看可用节点", thread_id)
+                        else:
+                            out = run_remote(node, ["--self-check"])
+                            send_message(token, chat_id, format_remote(node["name"], out or "(无输出)"), thread_id)
+                    else:
+                        out = run_local_report(["--self-check"])
+                        send_message(token, chat_id, out or "(无输出)", thread_id)
+
+                elif cmd == "/nodes":
+                    send_message(token, chat_id, node_list_text(), thread_id)
+
                 elif cmd == "/help":
                     send_message(token, chat_id, help_text, thread_id)
+
                 else:
                     send_message(token, chat_id, "未知命令。发送 /help 查看可用命令。", thread_id)
 

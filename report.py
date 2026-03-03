@@ -52,6 +52,13 @@ def fmt(ts: int) -> str:
     return datetime.datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M:%S")
 
 
+def node_name() -> str:
+    try:
+        return os.uname().nodename
+    except Exception:
+        return os.getenv("HOSTNAME", "unknown")
+
+
 def human_traffic(v: float) -> str:
     t = tb(v)
     if t >= 0.01:
@@ -145,6 +152,7 @@ def build_message(cfg: Dict[str, Any], st: Dict[str, Any], cur_rx: int, cur_tx: 
     msg = (
         f"🖥️ 服务器：{cfg['server_name']}\n"
         f"🕐 周期起始：{fmt(st['cycle_start_ts'])}\n"
+        f"🏷️ 节点：{node_name()}\n"
         f"🌐 网卡：{cfg['interface']}\n"
         f"⬇️ 入站流量：{human_traffic(cur_rx)}\n"
         f"⬆️ 出站流量：{human_traffic(cur_tx)}\n"
