@@ -59,3 +59,10 @@ systemctl status traffic-local-report.timer --no-pager
 
 ### Single node only
 Install as worker role and just use local `/traffic`.
+
+
+## Auto-fix common issues
+```bash
+trafficctl fix all
+trafficctl doctor
+```

@@ -59,3 +59,10 @@ systemctl status traffic-local-report.timer --no-pager
 
 ### Q3: 我只想本机，不要集群
 也可以直接装成 worker，用 `/traffic` 看本机。
+
+
+## 一键修复常见问题
+```bash
+trafficctl fix all
+trafficctl doctor
+```

@@ -90,6 +90,7 @@ journalctl -u traffic-local-bot.service -n 80 --no-pager
 - `trafficctl status`
 - `trafficctl report`
 - `trafficctl send`
+- `trafficctl fix all`（自动修常见问题）
 - `trafficctl restart bot`
 - `trafficctl logs bot 100`
 

@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.1] - 2026-03-04
+
+### Added
+- `trafficctl doctor` enhancements:
+  - nodes.json schema validation
+  - optional SSH connectivity check for each node
+  - permission checks for `/opt/traffic-local` and token file
+  - allowlist (`allowed_user_ids`) hint
+- `trafficctl fix` command:
+  - `fix all|perms|vnstat|timer|bot` for common repair flows
+
 ## [1.2.0] - 2026-03-04
 
 ### Added
