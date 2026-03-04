@@ -23,6 +23,8 @@ Usage:
   trafficctl status
   trafficctl why
   trafficctl rebase now
+  trafficctl set-billing <day> <HH:MM:SS>
+  trafficctl show-billing
   trafficctl report
   trafficctl send
   trafficctl restart bot
@@ -34,6 +36,8 @@ Examples:
   trafficctl fix all
   trafficctl why
   trafficctl rebase now
+  trafficctl set-billing 1 00:00:00
+  trafficctl show-billing
   trafficctl restart bot
   trafficctl logs bot 100
 EOF
@@ -335,6 +339,51 @@ PY
   esac
 }
 
+cmd_set_billing() {
+  need_root
+  local day="${1:-}"
+  local hms="${2:-}"
+
+  if ! printf '%s' "$day" | grep -Eq '^[0-9]+$'; then
+    err "day 必须是 1-28 的整数"
+    exit 1
+  fi
+  if [ "$day" -lt 1 ] || [ "$day" -gt 28 ]; then
+    err "day 必须在 1-28"
+    exit 1
+  fi
+  if ! printf '%s' "$hms" | grep -Eq '^[0-9]{2}:[0-9]{2}:[0-9]{2}$'; then
+    err "时间格式必须是 HH:MM:SS"
+    exit 1
+  fi
+
+  [ -f "$CFG" ] || { err "缺少配置文件: $CFG"; exit 1; }
+
+  python3 - "$CFG" "$day" "$hms" <<'PY'
+import json,sys,datetime
+p,day,hms=sys.argv[1],int(sys.argv[2]),sys.argv[3]
+_ = datetime.datetime.strptime(hms, '%H:%M:%S')
+d=json.load(open(p,'r',encoding='utf-8'))
+d['billing_day']=day
+d['billing_hms']=hms
+json.dump(d, open(p,'w',encoding='utf-8'), ensure_ascii=False, indent=2)
+print(f"updated billing_day={day}, billing_hms={hms}")
+PY
+
+  ok "账期设置已更新（未重置 state）。如需立刻按新账期重算，可执行: trafficctl rebase now"
+}
+
+cmd_show_billing() {
+  [ -f "$CFG" ] || { err "缺少配置文件: $CFG"; exit 1; }
+  python3 - "$CFG" <<'PY'
+import json,sys
+p=sys.argv[1]
+d=json.load(open(p,'r',encoding='utf-8'))
+print(f"billing_day: {d.get('billing_day')}")
+print(f"billing_hms: {d.get('billing_hms')}")
+PY
+}
+
 cmd_status() {
   echo "== service status =="
   systemctl status vnstat --no-pager -n 0 || true
@@ -386,6 +435,8 @@ main() {
     status) cmd_status ;;
     why) cmd_why ;;
     rebase) shift; cmd_rebase "$@" ;;
+    set-billing) shift; cmd_set_billing "$@" ;;
+    show-billing) cmd_show_billing ;;
     report) cmd_report ;;
     send) cmd_send ;;
     restart) shift; cmd_restart "$@" ;;

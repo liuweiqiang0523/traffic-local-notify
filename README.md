@@ -115,3 +115,17 @@ bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-loca
 ## License
 
 MIT
+
+
+## Billing (billing_day + billing_hms)
+Set billing cycle explicitly per server:
+
+```bash
+trafficctl set-billing 1 00:00:00
+trafficctl show-billing
+```
+
+If you want immediate cycle baseline reset:
+```bash
+trafficctl rebase now
+```

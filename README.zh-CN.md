@@ -122,3 +122,17 @@ bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-loca
 ## 许可证
 
 MIT
+
+
+## 账期（billing_day + billing_hms）
+推荐你按每台机器真实账单周期设置：
+
+```bash
+trafficctl set-billing 1 00:00:00
+trafficctl show-billing
+```
+
+如果需要立刻重置周期基线：
+```bash
+trafficctl rebase now
+```

@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0] - 2026-03-04
+
+### Added
+- Billing-centric commands:
+  - `trafficctl set-billing <day> <HH:MM:SS>`
+  - `trafficctl show-billing`
+
+### Improved
+- End-to-end docs now emphasize per-server billing policy (`billing_day + billing_hms`) as the primary truth.
+
 ## [1.2.6] - 2026-03-04
 
 ### Fixed

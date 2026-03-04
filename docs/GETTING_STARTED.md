@@ -80,3 +80,10 @@ trafficctl why
 trafficctl rebase now
 ```
 > It backs up old state and rebases cycle start to current time.
+
+
+## Recommended: set billing explicitly after install
+```bash
+trafficctl set-billing 1 00:00:00
+trafficctl show-billing
+```

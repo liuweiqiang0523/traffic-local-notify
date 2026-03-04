@@ -80,3 +80,10 @@ trafficctl why
 trafficctl rebase now
 ```
 > 会自动备份旧 state，再按当前时间重新起算。
+
+
+## 推荐：安装后显式设置账期
+```bash
+trafficctl set-billing 1 00:00:00
+trafficctl show-billing
+```

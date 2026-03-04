@@ -80,6 +80,14 @@ if ! printf "%s" "$LIMIT_GB" | grep -Eq "^[0-9]+([.][0-9]+)?$"; then
   exit 1
 fi
 
+
+current_day="$(date +%-d)"
+current_hms="$(date +%H:%M:%S)"
+read -r -p "BILLING_DAY [${current_day}] (1-28): " BILLING_DAY
+BILLING_DAY="${BILLING_DAY:-$current_day}"
+read -r -p "BILLING_HMS [${current_hms}] (HH:MM:SS): " BILLING_HMS
+BILLING_HMS="${BILLING_HMS:-$current_hms}"
+
 read -r -p "CHAT_ID (如 -100xxxx): " CHAT_ID
 if [ -z "$CHAT_ID" ]; then
   echo "CHAT_ID 不能为空"
@@ -108,11 +116,11 @@ fi
 
 echo
 echo "即将执行安装..."
-printf 'ROLE=%s SERVER_NAME=%s LIMIT_GB=%s SCHEDULE_MODE=%s\n' "$ROLE" "$SERVER_NAME" "$LIMIT_GB" "$SCHEDULE_MODE"
+printf 'ROLE=%s SERVER_NAME=%s LIMIT_GB=%s BILLING=%s %s SCHEDULE_MODE=%s\n' "$ROLE" "$SERVER_NAME" "$LIMIT_GB" "$BILLING_DAY" "$BILLING_HMS" "$SCHEDULE_MODE"
 if [ -n "$MASTER_HOST" ]; then
   printf 'MASTER_HOST=%s MASTER_USER=%s MASTER_KEY=%s\n' "$MASTER_HOST" "$MASTER_USER" "$MASTER_KEY"
 fi
 echo
 
-export ROLE SERVER_NAME LIMIT_GB CHAT_ID BOT_TOKEN SCHEDULE_MODE ALLOWED_USER_IDS MASTER_HOST MASTER_USER MASTER_KEY
+export ROLE SERVER_NAME LIMIT_GB BILLING_DAY BILLING_HMS CHAT_ID BOT_TOKEN SCHEDULE_MODE ALLOWED_USER_IDS MASTER_HOST MASTER_USER MASTER_KEY
 bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/setup-cluster.sh)
