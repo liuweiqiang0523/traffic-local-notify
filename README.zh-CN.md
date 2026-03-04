@@ -88,3 +88,19 @@ MIT
 - 批量部署示例：`examples/deploy-6.sh`
 
 可直接按模板替换 IP/节点名后使用。
+
+
+### 主控机真正一条命令（含 nodes.json）
+你可把 nodes.json 先 base64 后直接传给脚本：
+```bash
+NODES_JSON_B64="<base64内容>" ROLE=master LIMIT_GB="25600" CHAT_ID="-100xxxx" BOT_TOKEN="123:abc" \
+bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/setup-cluster.sh)
+```
+
+生成 base64：
+```bash
+base64 -w0 nodes.json   # Debian/Ubuntu
+# macOS: base64 -i nodes.json | tr -d "\n"
+```
+
+你也可以不传 `SERVER_NAME`，会自动用 `hostname-role` 命名。

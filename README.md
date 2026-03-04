@@ -57,3 +57,10 @@ MIT
 ## 6-node templates
 - Node inventory template: `examples/nodes.6.example.json`
 - Deployment helper sample: `examples/deploy-6.sh`
+
+
+## Master one-liner with preloaded nodes.json
+```bash
+NODES_JSON_B64="<base64>" ROLE=master LIMIT_GB="25600" CHAT_ID="-100xxxx" BOT_TOKEN="123:abc" \
+bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/setup-cluster.sh)
+```

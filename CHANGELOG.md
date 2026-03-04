@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.10] - 2026-03-04
+
+### Added
+- setup-cluster enhancements:
+  - auto server name fallback (`hostname-role`)
+  - master supports one-shot nodes provisioning via `NODES_JSON_B64` or `NODES_JSON_URL`
+- docs updated for true one-liner master deployment.
+
 ## [1.0.9] - 2026-03-04
 
 ### Added
