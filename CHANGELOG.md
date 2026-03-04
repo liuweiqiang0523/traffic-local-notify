@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.2] - 2026-03-04
+
+### Changed
+- Internal refactor for cluster bootstrap:
+  - extracted reusable cluster helper module to `scripts/lib/cluster.sh`
+  - `setup-cluster.sh` now reuses shared module (local mode + curl mode)
+- `quick-install.sh` now asks `ALLOWED_USER_IDS` to enable allowlist during first install.
+
 ## [1.2.1] - 2026-03-04
 
 ### Added

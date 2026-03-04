@@ -21,6 +21,8 @@ Then choose role when prompted:
 - `master`: command listener + remote queries
 - `worker`: local reporting only
 
+You can also input `ALLOWED_USER_IDS` during install to enable command allowlist immediately.
+
 ---
 
 ## What to remember

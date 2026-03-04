@@ -91,6 +91,8 @@ if [ -z "$BOT_TOKEN" ]; then
   exit 1
 fi
 
+read -r -p "ALLOWED_USER_IDS (逗号分隔，可留空不限制): " ALLOWED_USER_IDS
+
 MASTER_HOST=""
 if [ "$ROLE" = "worker" ]; then
   read -r -p "MASTER_HOST (用于自动注册，可留空跳过): " MASTER_HOST
@@ -110,5 +112,5 @@ if [ -n "$MASTER_HOST" ]; then
 fi
 echo
 
-export ROLE SERVER_NAME LIMIT_GB CHAT_ID BOT_TOKEN SCHEDULE_MODE MASTER_HOST MASTER_USER MASTER_KEY
+export ROLE SERVER_NAME LIMIT_GB CHAT_ID BOT_TOKEN SCHEDULE_MODE ALLOWED_USER_IDS MASTER_HOST MASTER_USER MASTER_KEY
 bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/setup-cluster.sh)

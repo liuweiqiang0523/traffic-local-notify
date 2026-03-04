@@ -21,6 +21,8 @@ bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-loca
 - `master`：主控机（负责 Telegram 命令）
 - `worker`：工作机（只负责本机上报）
 
+安装时可直接填写 `ALLOWED_USER_IDS`，一次到位开启命令白名单。
+
 ---
 
 ## 🧩 你只需要理解这 2 件事
