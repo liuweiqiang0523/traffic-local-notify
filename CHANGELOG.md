@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.13] - 2026-03-04
+
+### Added
+- `quick-install.sh --defaults` mode:
+  - asks only minimal required inputs
+  - uses sensible defaults for other fields
+
 ## [1.0.12] - 2026-03-04
 
 ### Added

@@ -17,6 +17,11 @@
 bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/quick-install.sh)
 ```
 
+极速默认模式（只问最少字段）：
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/quick-install.sh) --defaults
+```
+
 你只要按提示输入角色（master/worker）和基础参数即可。
 
 ## 一键脚本（你要的）

@@ -15,6 +15,11 @@ This avoids multiple servers competing for one Telegram bot `getUpdates` stream.
 bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/quick-install.sh)
 ```
 
+Fast defaults mode:
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/quick-install.sh) --defaults
+```
+
 This prompts role/params and runs setup automatically.
 
 ## One-command scripts (cluster)
