@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.11] - 2026-03-04
+
+### Added
+- Worker auto-registration to master nodes inventory in `setup-cluster.sh`:
+  - `MASTER_HOST`, `MASTER_USER`, `MASTER_PORT`, `MASTER_KEY`
+  - auto-detect worker public IP (`NODE_IP` fallback)
+  - updates/appends master `/opt/traffic-local/nodes.json` via SSH
+  - best-effort restart of master bot listener
+- Non-blocking fallback behavior if registration fails (installation continues).
+
 ## [1.0.10] - 2026-03-04
 
 ### Added

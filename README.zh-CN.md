@@ -104,3 +104,25 @@ base64 -w0 nodes.json   # Debian/Ubuntu
 ```
 
 你也可以不传 `SERVER_NAME`，会自动用 `hostname-role` 命名。
+
+
+## 全自动一条命令（v1.0.11）
+目标：每台机器一条命令；worker 安装后自动注册到 master 的 nodes.json。
+
+### 1) 先部署 master（只一次）
+```bash
+ROLE=master SERVER_NAME="master-hub" LIMIT_GB="25600" CHAT_ID="-100xxxx" BOT_TOKEN="123:abc" \
+bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/setup-cluster.sh)
+```
+
+### 2) 每台 worker 一条命令（会自动注册到 master）
+```bash
+ROLE=worker SERVER_NAME="lax-01" LIMIT_GB="25600" CHAT_ID="-100xxxx" BOT_TOKEN="123:abc" \
+MASTER_HOST="主控机IP" MASTER_USER="root" MASTER_KEY="/root/.ssh/id_ed25519" \
+bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/setup-cluster.sh)
+```
+
+> 说明：
+> - `MASTER_KEY` 是 worker 上用于 ssh 到 master 的私钥路径。
+> - worker 会自动探测公网 IP 并写入 master 的 `/opt/traffic-local/nodes.json`。
+> - 自动注册失败不会中断本机安装，会给出可手动补录的 JSON 条目。

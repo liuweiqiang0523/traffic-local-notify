@@ -64,3 +64,20 @@ MIT
 NODES_JSON_B64="<base64>" ROLE=master LIMIT_GB="25600" CHAT_ID="-100xxxx" BOT_TOKEN="123:abc" \
 bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/setup-cluster.sh)
 ```
+
+
+## Fully automated one-command mode (v1.0.11)
+Workers can auto-register themselves to master `nodes.json`.
+
+### Master (once)
+```bash
+ROLE=master SERVER_NAME="master-hub" LIMIT_GB="25600" CHAT_ID="-100xxxx" BOT_TOKEN="123:abc" \
+bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/setup-cluster.sh)
+```
+
+### Worker (per node)
+```bash
+ROLE=worker SERVER_NAME="lax-01" LIMIT_GB="25600" CHAT_ID="-100xxxx" BOT_TOKEN="123:abc" \
+MASTER_HOST="<master-ip>" MASTER_USER="root" MASTER_KEY="/root/.ssh/id_ed25519" \
+bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/setup-cluster.sh)
+```
