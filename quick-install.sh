@@ -22,7 +22,7 @@ for arg in "$@"; do
   bash <(curl -fsSL .../quick-install.sh) --defaults
   bash <(curl -fsSL .../quick-install.sh) --menu
 
---defaults: 极速模式，只问最少字段（角色/chat_id/token），其余走默认。
+--defaults: 极速模式（仍会询问流量限额，避免被固定为某个额度）。
 --menu: 菜单模式（安装后可直接跑 doctor）。
 EOF
       exit 0
@@ -60,7 +60,6 @@ fi
 default_name="$(hostname)-$ROLE"
 if [ "$DEFAULTS" = "true" ]; then
   SERVER_NAME="$default_name"
-  LIMIT_GB="25600"
   SCHEDULE_MODE="cron"
   MASTER_USER="root"
   MASTER_KEY="/root/.ssh/id_ed25519"
@@ -68,14 +67,17 @@ else
   read -r -p "SERVER_NAME [${default_name}]: " SERVER_NAME
   SERVER_NAME="${SERVER_NAME:-$default_name}"
 
-  read -r -p "LIMIT_GB [25600]: " LIMIT_GB
-  LIMIT_GB="${LIMIT_GB:-25600}"
-
   read -r -p "SCHEDULE_MODE [cron/systemd] (默认 cron): " SCHEDULE_MODE
   SCHEDULE_MODE="${SCHEDULE_MODE:-cron}"
 
   MASTER_USER="root"
   MASTER_KEY="/root/.ssh/id_ed25519"
+fi
+
+read -r -p "请输入月流量限额 LIMIT_GB（必填，如 8192）: " LIMIT_GB
+if ! printf "%s" "$LIMIT_GB" | grep -Eq "^[0-9]+([.][0-9]+)?$"; then
+  echo "LIMIT_GB 必须是数字"
+  exit 1
 fi
 
 read -r -p "CHAT_ID (如 -100xxxx): " CHAT_ID

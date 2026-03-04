@@ -5,6 +5,7 @@ Goal: finish a 1-master + 1-worker setup in ~10 minutes.
 ## 0) Prepare
 - Telegram bot token
 - target chat_id (e.g. `-100xxxx`)
+- Each server can use a different LIMIT_GB
 
 ## 1) On master
 ```bash

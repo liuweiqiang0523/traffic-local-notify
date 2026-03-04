@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.5] - 2026-03-04
+
+### Changed
+- `quick-install.sh --defaults` no longer auto-fills `LIMIT_GB=25600`.
+- Installer now always asks for `LIMIT_GB` explicitly, so each server can have its own quota.
+
 ## [1.2.4] - 2026-03-04
 
 ### Added

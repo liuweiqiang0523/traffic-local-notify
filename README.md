@@ -11,7 +11,7 @@ A beginner-friendly VPS monthly traffic notifier:
 
 ## 🚀 30-second start (recommended)
 
-Run this on any server:
+Run this on any server (it asks LIMIT_GB per server; no fixed 25TB default):
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/quick-install.sh) --defaults

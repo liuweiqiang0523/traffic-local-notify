@@ -5,6 +5,7 @@
 ## 0. 准备
 - 你要有一个 Telegram bot token
 - 你要知道目标群 chat_id（如 `-100xxxx`）
+- 每台机器都要输入自己的 LIMIT_GB（可不同）
 
 ## 1. 在主控机执行
 ```bash

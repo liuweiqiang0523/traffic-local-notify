@@ -11,7 +11,7 @@
 
 ## 🚀 30 秒上手（推荐）
 
-> 所有机器都先跑同一条命令：
+> 所有机器都先跑同一条命令（会让你自己输入每台机器的 LIMIT_GB，不再默认固定 25TB）：
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/quick-install.sh) --defaults
