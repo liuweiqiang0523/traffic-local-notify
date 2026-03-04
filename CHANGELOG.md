@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0] - 2026-03-04
+
+### Changed
+- README (EN/ZH) rewritten for beginner-first onboarding.
+- Simplified docs structure and highlighted single-command defaults flow.
+
+### Added
+- `docs/GETTING_STARTED.zh-CN.md`
+- `docs/GETTING_STARTED.md`
+
 ## [1.0.14] - 2026-03-04
 
 ### Added

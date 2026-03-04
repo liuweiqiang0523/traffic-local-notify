@@ -2,109 +2,101 @@
 
 [English](./README.md) | [简体中文](./README.zh-CN.md)
 
-Lightweight per-server monthly traffic monitor with vnStat + Python + Telegram notifications.
+A beginner-friendly VPS monthly traffic notifier:
+- uses `vnstat` on each machine
+- sends Telegram notifications on schedule
+- supports multi-node layout: 1 master + N workers
 
-## Recommended Architecture
-- **Master node**: Telegram command listener + remote query hub
-- **Worker nodes**: scheduled local reporting only
+---
 
-This avoids multiple servers competing for one Telegram bot `getUpdates` stream.
+## 🚀 30-second start (recommended)
 
-## Easiest interactive one-liner
-```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/quick-install.sh)
-```
+Run this on any server:
 
-Fast defaults mode:
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/quick-install.sh) --defaults
 ```
 
-This prompts role/params and runs setup automatically.
+Then choose role when prompted:
+- `master`: command listener + remote queries
+- `worker`: local reporting only
 
-## One-command scripts (cluster)
+---
 
-### Master
-```bash
-ROLE=master SERVER_NAME="master-hub" LIMIT_GB="25600" CHAT_ID="-100xxxx" BOT_TOKEN="123:abc" \
-bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/setup-cluster.sh)
-```
+## What to remember
 
-### Worker
-```bash
-ROLE=worker SERVER_NAME="lax-01" LIMIT_GB="25600" CHAT_ID="-100xxxx" BOT_TOKEN="123:abc" \
-bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/setup-cluster.sh)
-```
+1. Only **one master** is needed.
+2. Workers can scale out; each reports its own traffic.
 
-## Telegram Commands (master)
+---
+
+## Telegram commands (master)
+
 - `/help`
 - `/nodes`
-- `/summary`
+- `/summary` (master + all workers)
 - `/traffic`
 - `/traffic <node>`
 - `/selfcheck`
 - `/selfcheck <node>`
 - `/traffic_send`
 
-## v1.0.8 fallback behavior
-If remote SSH query fails, bot returns:
-- classified failure reason
-- troubleshooting hints
-- fallback local result from master
+---
+
+## Security: command allowlist (recommended)
+
+Edit config:
+```bash
+nano /opt/traffic-local/config.json
+```
+
+Add:
+```json
+"allowed_user_ids": [241088406]
+```
+
+Restart listener:
+```bash
+systemctl restart traffic-local-bot.service
+```
+
+---
+
+## Pin installer version (recommended for production)
+
+```bash
+VERSION=v1.0.14 bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/install.sh)
+```
+
+---
+
+## Troubleshooting
+
+```bash
+python3 /opt/traffic-local/report.py --self-check
+systemctl status traffic-local-bot.service --no-pager
+journalctl -u traffic-local-bot.service -n 80 --no-pager
+```
+
+---
 
 ## Uninstall
+
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/uninstall.sh)
 ```
 
-Removes:
-- `/opt/traffic-local`
-- report timer/service
-- bot listener service
-- related cron entries
+---
+
+## Advanced docs
+
+- Beginner guide: [`docs/GETTING_STARTED.md`](./docs/GETTING_STARTED.md)
+- 6-node template: `examples/nodes.6.example.json`
+- batch deploy sample: `examples/deploy-6.sh`
+- nodes template: `nodes.example.json`
+
+---
 
 ## License
+
 MIT
-
-
-## 6-node templates
-- Node inventory template: `examples/nodes.6.example.json`
-- Deployment helper sample: `examples/deploy-6.sh`
-
-
-## Master one-liner with preloaded nodes.json
-```bash
-NODES_JSON_B64="<base64>" ROLE=master LIMIT_GB="25600" CHAT_ID="-100xxxx" BOT_TOKEN="123:abc" \
-bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/setup-cluster.sh)
-```
-
-
-## Fully automated one-command mode (v1.0.11)
-Workers can auto-register themselves to master `nodes.json`.
-
-### Master (once)
-```bash
-ROLE=master SERVER_NAME="master-hub" LIMIT_GB="25600" CHAT_ID="-100xxxx" BOT_TOKEN="123:abc" \
-bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/setup-cluster.sh)
-```
-
-### Worker (per node)
-```bash
-ROLE=worker SERVER_NAME="lax-01" LIMIT_GB="25600" CHAT_ID="-100xxxx" BOT_TOKEN="123:abc" \
-MASTER_HOST="<master-ip>" MASTER_USER="root" MASTER_KEY="/root/.ssh/id_ed25519" \
-bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/setup-cluster.sh)
-```
-
-
-## Command allowlist
-Add to config:
-```json
-"allowed_user_ids": [241088406]
-```
-Only allow listed Telegram users to execute commands.
-
-
-## Pin version install
-```bash
-VERSION=v1.0.13 bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/install.sh)
-```
