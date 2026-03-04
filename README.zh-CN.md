@@ -136,3 +136,10 @@ trafficctl show-billing
 ```bash
 trafficctl rebase now
 ```
+
+
+### 每台机器不同流量限额
+```bash
+trafficctl set-limit 12288
+trafficctl show-limit
+```

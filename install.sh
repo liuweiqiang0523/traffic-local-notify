@@ -229,4 +229,4 @@ MASTER_CMD_HINT
 
 echo
 echo "固定版本安装（可选）："
-echo "  VERSION=v1.2.3 bash <(curl -fsSL https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/main/install.sh)"
+echo "  VERSION=v1.3.1 bash <(curl -fsSL https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/main/install.sh)"

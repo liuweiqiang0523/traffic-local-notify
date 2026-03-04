@@ -85,8 +85,16 @@ current_day="$(date +%-d)"
 current_hms="$(date +%H:%M:%S)"
 read -r -p "BILLING_DAY [${current_day}] (1-28): " BILLING_DAY
 BILLING_DAY="${BILLING_DAY:-$current_day}"
+if ! printf "%s" "$BILLING_DAY" | grep -Eq "^[0-9]+$" || [ "$BILLING_DAY" -lt 1 ] || [ "$BILLING_DAY" -gt 28 ]; then
+  echo "BILLING_DAY 必须在 1-28"
+  exit 1
+fi
 read -r -p "BILLING_HMS [${current_hms}] (HH:MM:SS): " BILLING_HMS
 BILLING_HMS="${BILLING_HMS:-$current_hms}"
+if ! printf "%s" "$BILLING_HMS" | grep -Eq "^[0-9]{2}:[0-9]{2}:[0-9]{2}$"; then
+  echo "BILLING_HMS 格式必须是 HH:MM:SS"
+  exit 1
+fi
 
 read -r -p "CHAT_ID (如 -100xxxx): " CHAT_ID
 if [ -z "$CHAT_ID" ]; then

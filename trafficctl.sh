@@ -25,6 +25,8 @@ Usage:
   trafficctl rebase now
   trafficctl set-billing <day> <HH:MM:SS>
   trafficctl show-billing
+  trafficctl set-limit <GB>
+  trafficctl show-limit
   trafficctl report
   trafficctl send
   trafficctl restart bot
@@ -38,6 +40,8 @@ Examples:
   trafficctl rebase now
   trafficctl set-billing 1 00:00:00
   trafficctl show-billing
+  trafficctl set-limit 12288
+  trafficctl show-limit
   trafficctl restart bot
   trafficctl logs bot 100
 EOF
@@ -384,6 +388,35 @@ print(f"billing_hms: {d.get('billing_hms')}")
 PY
 }
 
+cmd_set_limit() {
+  need_root
+  local limit="${1:-}"
+  if ! printf '%s' "$limit" | grep -Eq '^[0-9]+([.][0-9]+)?$'; then
+    err "limit 必须是数字（单位 GB）"
+    exit 1
+  fi
+  [ -f "$CFG" ] || { err "缺少配置文件: $CFG"; exit 1; }
+  python3 - "$CFG" "$limit" <<'PY'
+import json,sys
+p,limit=sys.argv[1],float(sys.argv[2])
+d=json.load(open(p,'r',encoding='utf-8'))
+d['limit_gb']=limit
+json.dump(d, open(p,'w',encoding='utf-8'), ensure_ascii=False, indent=2)
+print(f"updated limit_gb={limit}")
+PY
+  ok "流量限额已更新"
+}
+
+cmd_show_limit() {
+  [ -f "$CFG" ] || { err "缺少配置文件: $CFG"; exit 1; }
+  python3 - "$CFG" <<'PY'
+import json,sys
+p=sys.argv[1]
+d=json.load(open(p,'r',encoding='utf-8'))
+print(f"limit_gb: {d.get('limit_gb')}")
+PY
+}
+
 cmd_status() {
   echo "== service status =="
   systemctl status vnstat --no-pager -n 0 || true
@@ -437,6 +470,8 @@ main() {
     rebase) shift; cmd_rebase "$@" ;;
     set-billing) shift; cmd_set_billing "$@" ;;
     show-billing) cmd_show_billing ;;
+    set-limit) shift; cmd_set_limit "$@" ;;
+    show-limit) cmd_show_limit ;;
     report) cmd_report ;;
     send) cmd_send ;;
     restart) shift; cmd_restart "$@" ;;

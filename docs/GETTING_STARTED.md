@@ -87,3 +87,9 @@ trafficctl rebase now
 trafficctl set-billing 1 00:00:00
 trafficctl show-billing
 ```
+
+
+```bash
+trafficctl set-limit 12288
+trafficctl show-limit
+```

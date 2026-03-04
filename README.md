@@ -129,3 +129,10 @@ If you want immediate cycle baseline reset:
 ```bash
 trafficctl rebase now
 ```
+
+
+### Per-server traffic quota
+```bash
+trafficctl set-limit 12288
+trafficctl show-limit
+```

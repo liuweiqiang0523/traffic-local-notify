@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.1] - 2026-03-04
+
+### Added
+- `trafficctl set-limit <GB>` / `trafficctl show-limit`
+
+### Improved
+- `quick-install.sh` now validates `BILLING_DAY` (1-28) and `BILLING_HMS` (HH:MM:SS).
+- install hint updated to latest version example.
+
 ## [1.3.0] - 2026-03-04
 
 ### Added
