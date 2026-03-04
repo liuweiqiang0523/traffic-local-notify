@@ -204,6 +204,7 @@ LOCAL_TIMER="${SCRIPT_DIR}/systemd/traffic-local-report.timer"
 LOCAL_BOT="${SCRIPT_DIR}/bot_listener.py"
 LOCAL_BOT_SERVICE="${SCRIPT_DIR}/systemd/traffic-local-bot.service"
 LOCAL_NODES_EXAMPLE="${SCRIPT_DIR}/nodes.example.json"
+LOCAL_TRAFFICCTL="${SCRIPT_DIR}/trafficctl.sh"
 
 # 支持两种安装方式：
 # 1) git clone 后执行 ./install.sh（本地文件存在）
@@ -226,6 +227,15 @@ else
   download_file "${RAW_BASE}/bot_listener.py" "/opt/traffic-local/bot_listener.py"
   chmod 755 /opt/traffic-local/bot_listener.py
 fi
+
+# 安装 trafficctl（运维助手）
+if [ -n "$SCRIPT_DIR" ] && [ -f "$LOCAL_TRAFFICCTL" ]; then
+  install -m 755 "$LOCAL_TRAFFICCTL" /opt/traffic-local/trafficctl.sh
+else
+  download_file "${RAW_BASE}/trafficctl.sh" "/opt/traffic-local/trafficctl.sh"
+  chmod 755 /opt/traffic-local/trafficctl.sh
+fi
+install -m 755 /opt/traffic-local/trafficctl.sh /usr/local/bin/trafficctl
 
 # 节点清单模板（仅主控机需要）
 if [ ! -f /opt/traffic-local/nodes.json ]; then
@@ -333,6 +343,7 @@ echo "常用命令："
 echo "  python3 /opt/traffic-local/report.py --dry-run"
 echo "  python3 /opt/traffic-local/report.py --send"
 echo "  python3 /opt/traffic-local/report.py --self-check"
+echo "  trafficctl doctor"
 echo
 cat <<'CRON_HINT'
 若你要手动使用 cron（23:55）：
@@ -360,4 +371,4 @@ MASTER_CMD_HINT
 
 echo
 echo "固定版本安装（可选）："
-echo "  VERSION=v1.0.13 bash <(curl -fsSL https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/main/install.sh)"
+echo "  VERSION=v1.2.0 bash <(curl -fsSL https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/main/install.sh)"

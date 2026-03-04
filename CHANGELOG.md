@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0] - 2026-03-04
+
+### Added
+- `trafficctl` helper CLI for beginner operations and diagnostics:
+  - `doctor`, `status`, `report`, `send`, `restart`, `logs`
+- Installer now deploys `trafficctl` to `/usr/local/bin/trafficctl`.
+- `quick-install.sh --menu` mode (install or run doctor).
+
+### Changed
+- Install completion hints now include `trafficctl doctor`.
+
 ## [1.1.0] - 2026-03-04
 
 ### Changed

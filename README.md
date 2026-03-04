@@ -73,10 +73,18 @@ VERSION=v1.0.14 bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0
 ## Troubleshooting
 
 ```bash
+trafficctl doctor
 python3 /opt/traffic-local/report.py --self-check
 systemctl status traffic-local-bot.service --no-pager
 journalctl -u traffic-local-bot.service -n 80 --no-pager
 ```
+
+`trafficctl` also supports:
+- `trafficctl status`
+- `trafficctl report`
+- `trafficctl send`
+- `trafficctl restart bot`
+- `trafficctl logs bot 100`
 
 ---
 

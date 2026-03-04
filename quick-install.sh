@@ -10,21 +10,44 @@ if [ "$(id -u)" -ne 0 ]; then
 fi
 
 DEFAULTS=false
+MENU=false
 for arg in "$@"; do
   case "$arg" in
     --defaults) DEFAULTS=true ;;
+    --menu) MENU=true ;;
     -h|--help)
       cat <<'EOF'
 用法：
   bash <(curl -fsSL .../quick-install.sh)
   bash <(curl -fsSL .../quick-install.sh) --defaults
+  bash <(curl -fsSL .../quick-install.sh) --menu
 
 --defaults: 极速模式，只问最少字段（角色/chat_id/token），其余走默认。
+--menu: 菜单模式（安装后可直接跑 doctor）。
 EOF
       exit 0
       ;;
   esac
 done
+
+
+if [ "$MENU" = "true" ] && [ -t 0 ]; then
+  echo "请选择："
+  echo "  1) 安装/初始化"
+  echo "  2) 仅诊断（doctor）"
+  read -r -p "输入 [1/2] (默认 1): " _pick
+  _pick="${_pick:-1}"
+  if [ "$_pick" = "2" ]; then
+    if command -v trafficctl >/dev/null 2>&1; then
+      exec trafficctl doctor
+    elif [ -x /opt/traffic-local/trafficctl.sh ]; then
+      exec /opt/traffic-local/trafficctl.sh doctor
+    else
+      echo "未发现 trafficctl，先安装后再诊断。"
+      exit 1
+    fi
+  fi
+fi
 
 read -r -p "角色 [master/worker] (默认 worker): " ROLE
 ROLE="${ROLE:-worker}"
