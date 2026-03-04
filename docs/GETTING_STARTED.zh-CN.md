@@ -72,3 +72,10 @@ trafficctl doctor
 ```bash
 trafficctl why
 ```
+
+
+## 如果账期起点不符合你的实际
+```bash
+trafficctl rebase now
+```
+> 会自动备份旧 state，再按当前时间重新起算。

@@ -89,6 +89,7 @@ journalctl -u traffic-local-bot.service -n 80 --no-pager
 - `trafficctl restart bot`
 - `trafficctl logs bot 100`
 - `trafficctl why` (quick failure lookup)
+- `trafficctl rebase now` (reset cycle start to now)
 
 ---
 

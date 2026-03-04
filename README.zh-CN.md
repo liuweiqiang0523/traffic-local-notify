@@ -96,6 +96,7 @@ journalctl -u traffic-local-bot.service -n 80 --no-pager
 - `trafficctl restart bot`
 - `trafficctl logs bot 100`
 - `trafficctl why`（失败原因速查）
+- `trafficctl rebase now`（按当前时间重置周期起点）
 
 ---
 

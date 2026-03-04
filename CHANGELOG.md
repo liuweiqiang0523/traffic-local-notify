@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.4] - 2026-03-04
+
+### Added
+- `trafficctl rebase now`:
+  - set `billing_day/billing_hms` to current time
+  - backup and reset `state.json` safely
+  - print immediate dry-run result
+
+### Why
+- Align cycle start with real billing situation without manual file edits.
+
 ## [1.2.3] - 2026-03-04
 
 ### Added

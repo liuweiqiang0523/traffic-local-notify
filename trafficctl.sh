@@ -22,6 +22,7 @@ Usage:
   trafficctl fix [all|perms|vnstat|timer|bot]
   trafficctl status
   trafficctl why
+  trafficctl rebase now
   trafficctl report
   trafficctl send
   trafficctl restart bot
@@ -32,6 +33,7 @@ Examples:
   trafficctl doctor
   trafficctl fix all
   trafficctl why
+  trafficctl rebase now
   trafficctl restart bot
   trafficctl logs bot 100
 EOF
@@ -259,7 +261,6 @@ cmd_fix() {
   esac
 }
 
-
 cmd_why() {
   cat <<'EOF'
 常见失败原因速查：
@@ -294,6 +295,44 @@ cmd_why() {
      python3 -m json.tool /opt/traffic-local/config.json
      trafficctl doctor
 EOF
+}
+
+cmd_rebase() {
+  need_root
+  local mode="${1:-}"
+  case "$mode" in
+    now)
+      [ -f "$CFG" ] || { err "缺少配置文件: $CFG"; exit 1; }
+      local day hms backup
+      day="$(date +%-d)"
+      hms="$(date +%H:%M:%S)"
+
+      python3 - "$CFG" "$day" "$hms" <<'PY'
+import json,sys
+p,day,hms=sys.argv[1],int(sys.argv[2]),sys.argv[3]
+d=json.load(open(p,'r',encoding='utf-8'))
+d['billing_day']=day
+d['billing_hms']=hms
+json.dump(d, open(p,'w',encoding='utf-8'), ensure_ascii=False, indent=2)
+print(f"updated billing_day={day}, billing_hms={hms}")
+PY
+
+      if [ -f /opt/traffic-local/state.json ]; then
+        backup="/opt/traffic-local/state.json.bak.$(date +%Y%m%d-%H%M%S)"
+        cp /opt/traffic-local/state.json "$backup"
+        rm -f /opt/traffic-local/state.json
+        ok "已重置周期基线（原 state 已备份到: $backup）"
+      else
+        ok "已更新账期为当前时间（无历史 state 可重置）"
+      fi
+
+      python3 "$REPORT" --dry-run || true
+      ;;
+    *)
+      err "用法: trafficctl rebase now"
+      exit 1
+      ;;
+  esac
 }
 
 cmd_status() {
@@ -346,6 +385,7 @@ main() {
     fix) shift; cmd_fix "$@" ;;
     status) cmd_status ;;
     why) cmd_why ;;
+    rebase) shift; cmd_rebase "$@" ;;
     report) cmd_report ;;
     send) cmd_send ;;
     restart) shift; cmd_restart "$@" ;;

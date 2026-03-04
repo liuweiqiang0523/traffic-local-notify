@@ -72,3 +72,10 @@ trafficctl doctor
 ```bash
 trafficctl why
 ```
+
+
+## If cycle start does not match your billing reality
+```bash
+trafficctl rebase now
+```
+> It backs up old state and rebases cycle start to current time.
