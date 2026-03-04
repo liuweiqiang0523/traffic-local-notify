@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.6] - 2026-03-04
+
+### Fixed
+- Removed static billing-cycle defaults in one-line installs.
+- `setup-cluster.sh` now defaults `BILLING_DAY/BILLING_HMS` to current time if not provided.
+- `install.sh` env-mode defaults updated similarly; interactive mode now shows current time as default.
+
 ## [1.2.5] - 2026-03-04
 
 ### Changed

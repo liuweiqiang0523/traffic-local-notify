@@ -23,6 +23,8 @@ Then choose role when prompted:
 
 You can also input `ALLOWED_USER_IDS` during install to enable command allowlist immediately.
 
+Billing cycle now defaults to the current install time (no fixed 27th 00:02:06).
+
 ---
 
 ## What to remember

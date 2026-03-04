@@ -23,6 +23,8 @@ bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-loca
 
 安装时可直接填写 `ALLOWED_USER_IDS`，一次到位开启命令白名单。
 
+账期默认会按“安装当下时间”初始化（不再固定 27 号 00:02:06）。
+
 ---
 
 ## 🧩 你只需要理解这 2 件事
