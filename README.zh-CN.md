@@ -61,7 +61,7 @@ nano /opt/traffic-local/config.json
 
 加入：
 ```json
-"allowed_user_ids": [241088406]
+"allowed_user_ids": [xxxxxxxxx]
 ```
 
 重启：
