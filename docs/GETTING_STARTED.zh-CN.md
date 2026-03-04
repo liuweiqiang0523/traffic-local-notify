@@ -93,3 +93,6 @@ trafficctl show-billing
 trafficctl set-limit 12288
 trafficctl show-limit
 ```
+
+
+- billing_day 可设 1~31，短月自动回退到月末。

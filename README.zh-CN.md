@@ -143,3 +143,8 @@ trafficctl rebase now
 trafficctl set-limit 12288
 trafficctl show-limit
 ```
+
+
+### billing_day 支持 1~31
+- 现在支持 29/30/31
+- 短月会自动回退到当月最后一天（例如 31 在 2 月按 28/29）

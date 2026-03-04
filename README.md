@@ -136,3 +136,8 @@ trafficctl rebase now
 trafficctl set-limit 12288
 trafficctl show-limit
 ```
+
+
+### billing_day supports 1~31
+- Supports 29/30/31
+- On short months, it falls back to month-end automatically (e.g. day 31 -> Feb 28/29).

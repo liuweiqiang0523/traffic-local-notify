@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.2] - 2026-03-04
+
+### Added
+- `billing_day` now supports 1~31.
+- Smart short-month fallback in cycle calculation:
+  - day 29/30/31 automatically falls back to month-end when needed.
+
+### Updated
+- `quick-install.sh` and `trafficctl set-billing` validation updated to 1~31.
+
 ## [1.3.1] - 2026-03-04
 
 ### Added

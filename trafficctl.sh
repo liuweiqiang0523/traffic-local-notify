@@ -349,11 +349,11 @@ cmd_set_billing() {
   local hms="${2:-}"
 
   if ! printf '%s' "$day" | grep -Eq '^[0-9]+$'; then
-    err "day 必须是 1-28 的整数"
+    err "day 必须是 1-31 的整数"
     exit 1
   fi
-  if [ "$day" -lt 1 ] || [ "$day" -gt 28 ]; then
-    err "day 必须在 1-28"
+  if [ "$day" -lt 1 ] || [ "$day" -gt 31 ]; then
+    err "day 必须在 1-31"
     exit 1
   fi
   if ! printf '%s' "$hms" | grep -Eq '^[0-9]{2}:[0-9]{2}:[0-9]{2}$'; then

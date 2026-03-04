@@ -83,10 +83,10 @@ fi
 
 current_day="$(date +%-d)"
 current_hms="$(date +%H:%M:%S)"
-read -r -p "BILLING_DAY [${current_day}] (1-28): " BILLING_DAY
+read -r -p "BILLING_DAY [${current_day}] (1-31): " BILLING_DAY
 BILLING_DAY="${BILLING_DAY:-$current_day}"
-if ! printf "%s" "$BILLING_DAY" | grep -Eq "^[0-9]+$" || [ "$BILLING_DAY" -lt 1 ] || [ "$BILLING_DAY" -gt 28 ]; then
-  echo "BILLING_DAY 必须在 1-28"
+if ! printf "%s" "$BILLING_DAY" | grep -Eq "^[0-9]+$" || [ "$BILLING_DAY" -lt 1 ] || [ "$BILLING_DAY" -gt 31 ]; then
+  echo "BILLING_DAY 必须在 1-31"
   exit 1
 fi
 read -r -p "BILLING_HMS [${current_hms}] (HH:MM:SS): " BILLING_HMS

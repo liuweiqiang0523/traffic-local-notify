@@ -93,3 +93,6 @@ trafficctl show-billing
 trafficctl set-limit 12288
 trafficctl show-limit
 ```
+
+
+- billing_day can be 1~31; short months fallback to month-end automatically.

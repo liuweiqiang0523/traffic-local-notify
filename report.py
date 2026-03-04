@@ -8,6 +8,7 @@ Monthly traffic reporter based on vnStat.
 """
 
 import argparse
+import calendar
 import datetime
 import json
 import os
@@ -70,16 +71,23 @@ def human_traffic(v: float) -> str:
     return f"{m:>8.2f} MB"
 
 
+def _safe_day(year: int, month: int, desired_day: int) -> int:
+    last = calendar.monthrange(year, month)[1]
+    return min(desired_day, last)
+
+
 def cycle_start(now: datetime.datetime, day: int, hms: str) -> datetime.datetime:
     h, m, s = map(int, hms.split(":"))
-    current = datetime.datetime(now.year, now.month, day, h, m, s, tzinfo=now.tzinfo)
+    d_cur = _safe_day(now.year, now.month, day)
+    current = datetime.datetime(now.year, now.month, d_cur, h, m, s, tzinfo=now.tzinfo)
     if now >= current:
         return current
 
     y, mo = now.year, now.month - 1
     if mo == 0:
         y, mo = y - 1, 12
-    return datetime.datetime(y, mo, day, h, m, s, tzinfo=now.tzinfo)
+    d_prev = _safe_day(y, mo, day)
+    return datetime.datetime(y, mo, d_prev, h, m, s, tzinfo=now.tzinfo)
 
 
 def tg_send(token: str, chat_id: str, text: str) -> None:
@@ -189,8 +197,8 @@ def validate_config(cfg: Dict[str, Any]) -> None:
 
     if not isinstance(cfg["billing_day"], int):
         raise ReportError("billing_day 必须是整数")
-    if cfg["billing_day"] < 1 or cfg["billing_day"] > 28:
-        raise ReportError("billing_day 建议范围 1~28，避免短月问题")
+    if cfg["billing_day"] < 1 or cfg["billing_day"] > 31:
+        raise ReportError("billing_day 必须在 1~31")
 
     try:
         datetime.datetime.strptime(cfg["billing_hms"], "%H:%M:%S")
