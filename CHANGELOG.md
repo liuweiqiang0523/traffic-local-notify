@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.12] - 2026-03-04
+
+### Added
+- `quick-install.sh`: truly single-command interactive installer
+  - prompts role (master/worker)
+  - prompts required settings
+  - executes cluster setup automatically
+
 ## [1.0.11] - 2026-03-04
 
 ### Added

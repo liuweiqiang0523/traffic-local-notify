@@ -12,6 +12,13 @@
 
 ---
 
+## 最省心：一条命令交互安装（主控/被控自动区分）
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/quick-install.sh)
+```
+
+你只要按提示输入角色（master/worker）和基础参数即可。
+
 ## 一键脚本（你要的）
 
 ### A) 主控机一条命令

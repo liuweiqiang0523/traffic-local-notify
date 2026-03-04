@@ -10,6 +10,13 @@ Lightweight per-server monthly traffic monitor with vnStat + Python + Telegram n
 
 This avoids multiple servers competing for one Telegram bot `getUpdates` stream.
 
+## Easiest interactive one-liner
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/quick-install.sh)
+```
+
+This prompts role/params and runs setup automatically.
+
 ## One-command scripts (cluster)
 
 ### Master
