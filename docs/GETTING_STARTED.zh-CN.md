@@ -66,3 +66,9 @@ systemctl status traffic-local-report.timer --no-pager
 trafficctl fix all
 trafficctl doctor
 ```
+
+
+## 失败了先看这个
+```bash
+trafficctl why
+```

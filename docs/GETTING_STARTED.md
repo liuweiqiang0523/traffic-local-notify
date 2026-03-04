@@ -66,3 +66,9 @@ Install as worker role and just use local `/traffic`.
 trafficctl fix all
 trafficctl doctor
 ```
+
+
+## Quick failure lookup
+```bash
+trafficctl why
+```

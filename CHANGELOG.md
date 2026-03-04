@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.3] - 2026-03-04
+
+### Added
+- `scripts/lib/install.sh`: shared install helpers, sourced by installer
+- `trafficctl why`: common failure reasons and quick fixes
+
+### Changed
+- Installer now supports `NODES_JSON_B64` / `NODES_JSON_URL` payload via shared helper path.
+- Further internal modularization for maintainability (same external commands).
+
 ## [1.2.2] - 2026-03-04
 
 ### Changed

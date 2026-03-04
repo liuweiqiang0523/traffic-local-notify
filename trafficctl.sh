@@ -21,6 +21,7 @@ Usage:
   trafficctl doctor
   trafficctl fix [all|perms|vnstat|timer|bot]
   trafficctl status
+  trafficctl why
   trafficctl report
   trafficctl send
   trafficctl restart bot
@@ -30,6 +31,7 @@ Usage:
 Examples:
   trafficctl doctor
   trafficctl fix all
+  trafficctl why
   trafficctl restart bot
   trafficctl logs bot 100
 EOF
@@ -257,6 +259,43 @@ cmd_fix() {
   esac
 }
 
+
+cmd_why() {
+  cat <<'EOF'
+常见失败原因速查：
+
+1) /traffic <node> 失败：Permission denied
+   - 原因：SSH 密钥不匹配或未加 authorized_keys
+   - 处理：把主控机公钥加入 worker ~/.ssh/authorized_keys
+
+2) /traffic <node> 失败：Connection timed out / No route to host
+   - 原因：网络不通、防火墙或安全组未放行 22
+   - 处理：检查 IP、端口、云防火墙策略
+
+3) bot listener 不工作
+   - 原因：服务未启动、重复实例、chat_id 不匹配
+   - 处理：
+     trafficctl restart bot
+     trafficctl logs bot 100
+
+4) 定时通知不发送
+   - 原因：timer/cron 未配置或未运行
+   - 处理：
+     trafficctl fix timer
+     systemctl status traffic-local-report.timer --no-pager
+
+5) 命令都没反应
+   - 原因：白名单限制（allowed_user_ids）
+   - 处理：确认你的 Telegram user_id 在 config.json 里
+
+6) 配置文件损坏
+   - 原因：config.json 不是合法 JSON
+   - 处理：
+     python3 -m json.tool /opt/traffic-local/config.json
+     trafficctl doctor
+EOF
+}
+
 cmd_status() {
   echo "== service status =="
   systemctl status vnstat --no-pager -n 0 || true
@@ -306,6 +345,7 @@ main() {
     doctor) cmd_doctor ;;
     fix) shift; cmd_fix "$@" ;;
     status) cmd_status ;;
+    why) cmd_why ;;
     report) cmd_report ;;
     send) cmd_send ;;
     restart) shift; cmd_restart "$@" ;;
