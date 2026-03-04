@@ -11,7 +11,9 @@ fi
 REPO_OWNER="${REPO_OWNER:-liuweiqiang0523}"
 REPO_NAME="${REPO_NAME:-traffic-local-notify}"
 BRANCH="${BRANCH:-main}"
-RAW_BASE="https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${BRANCH}"
+VERSION="${VERSION:-}" # e.g. v1.0.13; if set, download from tag instead of branch
+REF="${VERSION:-$BRANCH}"
+RAW_BASE="https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${REF}"
 
 # install modes
 ENABLE_SYSTEMD_TIMER="${ENABLE_SYSTEMD_TIMER:-false}" # true/false
@@ -28,6 +30,7 @@ BILLING_HMS="${BILLING_HMS:-00:02:06}"
 CHAT_ID="${CHAT_ID:-}"
 BOT_TOKEN="${BOT_TOKEN:-}"
 DEPLOY_ROLE="${DEPLOY_ROLE:-worker}" # master|worker
+ALLOWED_USER_IDS="${ALLOWED_USER_IDS:-}" # comma-separated telegram user ids
 
 need_cmd() { command -v "$1" >/dev/null 2>&1; }
 
@@ -94,6 +97,11 @@ write_config_from_env() {
     exit 1
   fi
 
+  local allowed_json=""
+  if [ -n "$ALLOWED_USER_IDS" ]; then
+    allowed_json="$(printf '%s' "$ALLOWED_USER_IDS" | tr ',' '\n' | sed '/^$/d' | sed 's/[^0-9]//g' | awk 'NF{printf "%s%s", sep, $1; sep=","}')"
+  fi
+
   cat > /opt/traffic-local/config.json <<JSON
 {
   "server_name": "${SERVER_NAME}",
@@ -104,7 +112,8 @@ write_config_from_env() {
   "telegram_bot_token_file": "/opt/traffic-local/tg_bot_token.txt",
   "telegram_chat_id": "${CHAT_ID}",
   "send_always": false,
-  "alert_levels": [80, 90, 100]
+  "alert_levels": [80, 90, 100],
+  "allowed_user_ids": [${allowed_json}]
 }
 JSON
 
@@ -118,7 +127,7 @@ write_config_interactive() {
   local default_iface="$(detect_iface)"
   [ -z "$default_iface" ] && default_iface="eth0"
 
-  local server_name interface limit_gb billing_day billing_hms chat_id bot_token
+  local server_name interface limit_gb billing_day billing_hms chat_id bot_token allow_ids allowed_json
 
   echo
   echo "=== 交互式初始化 ==="
@@ -150,6 +159,12 @@ write_config_interactive() {
     exit 1
   fi
 
+  read -r -p "允许操作的 Telegram user_id（逗号分隔，可留空不限制）: " allow_ids
+  allowed_json=""
+  if [ -n "$allow_ids" ]; then
+    allowed_json="$(printf "%s" "$allow_ids" | tr "," "\n" | sed '/^$/d' | sed 's/[^0-9]//g' | awk 'NF{printf "%s%s", sep, $1; sep=","}')"
+  fi
+
   cat > /opt/traffic-local/config.json <<JSON
 {
   "server_name": "${server_name}",
@@ -160,7 +175,8 @@ write_config_interactive() {
   "telegram_bot_token_file": "/opt/traffic-local/tg_bot_token.txt",
   "telegram_chat_id": "${chat_id}",
   "send_always": false,
-  "alert_levels": [80, 90, 100]
+  "alert_levels": [80, 90, 100],
+  "allowed_user_ids": [${allowed_json}]
 }
 JSON
 
@@ -341,3 +357,7 @@ cat <<'MASTER_CMD_HINT'
   工作机（仅定时上报，不监听命令）：
     DEPLOY_ROLE="worker" INIT=true SCHEDULE_MODE="cron" SERVER_NAME="vps-01" LIMIT_GB="25600" CHAT_ID="-100xxxx" BOT_TOKEN="123:abc" bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/install.sh)
 MASTER_CMD_HINT
+
+echo
+echo "固定版本安装（可选）："
+echo "  VERSION=v1.0.13 bash <(curl -fsSL https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/main/install.sh)"

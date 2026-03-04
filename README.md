@@ -39,6 +39,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-loca
 ## Telegram Commands (master)
 - `/help`
 - `/nodes`
+- `/summary`
 - `/traffic`
 - `/traffic <node>`
 - `/selfcheck`
@@ -92,4 +93,18 @@ bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-loca
 ROLE=worker SERVER_NAME="lax-01" LIMIT_GB="25600" CHAT_ID="-100xxxx" BOT_TOKEN="123:abc" \
 MASTER_HOST="<master-ip>" MASTER_USER="root" MASTER_KEY="/root/.ssh/id_ed25519" \
 bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/setup-cluster.sh)
+```
+
+
+## Command allowlist
+Add to config:
+```json
+"allowed_user_ids": [241088406]
+```
+Only allow listed Telegram users to execute commands.
+
+
+## Pin version install
+```bash
+VERSION=v1.0.13 bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/install.sh)
 ```

@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.14] - 2026-03-04
+
+### Added
+- P0 hardening:
+  - bot listener singleton lock (prevent duplicate consumers)
+  - Telegram command user allowlist via `allowed_user_ids`
+  - version-pinned installer support (`VERSION=<tag>`)
+- New command: `/summary` to aggregate usage across master + nodes.
+
 ## [1.0.13] - 2026-03-04
 
 ### Added

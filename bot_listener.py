@@ -1,18 +1,21 @@
 #!/usr/bin/env python3
 """Telegram command listener for traffic-local-notify (master-only).
 
-Master mode supports remote node query via SSH:
+Master mode supports:
 - /traffic                 -> local report dry-run
 - /traffic_send            -> local report send
 - /selfcheck               -> local self-check
 - /nodes                   -> list configured nodes
+- /summary                 -> summarize all nodes + master
 - /traffic <node>          -> query remote node dry-run (with fallback hints)
 - /selfcheck <node>        -> remote self-check (with fallback hints)
 - /help                    -> command help
 """
 
+import fcntl
 import json
 import os
+import re
 import shlex
 import subprocess
 import time
@@ -24,6 +27,7 @@ CFG = "/opt/traffic-local/config.json"
 OFFSET_FILE = "/opt/traffic-local/bot.offset"
 REPORT = "/opt/traffic-local/report.py"
 NODES = "/opt/traffic-local/nodes.json"
+LOCK_FILE = "/opt/traffic-local/bot_listener.lock"
 
 
 def load_json(path: str, default: Any):
@@ -192,10 +196,48 @@ def format_remote_fallback(node_name: str, err: str, fallback: str) -> str:
     )
 
 
+def extract_brief(report_text: str) -> str:
+    lines = report_text.splitlines()
+    server = next((x.split("：", 1)[1].strip() for x in lines if x.startswith("🖥️ 服务器：")), "unknown")
+    used = next((x.split("：", 1)[1].strip() for x in lines if x.startswith("📈 已用流量：")), "?")
+    limit = next((x.split("：", 1)[1].strip() for x in lines if x.startswith("📊 流量限额：")), "?")
+    return f"- {server}: 已用 {used} / {limit}"
+
+
+def summary_all_nodes() -> str:
+    out_lines = ["📦 汇总（master + workers）"]
+    local = run_local_report(["--dry-run"])
+    out_lines.append(extract_brief(local))
+
+    for n in load_nodes():
+        ok, body = run_remote(n, ["--dry-run"])
+        if ok:
+            out_lines.append(extract_brief(body))
+        else:
+            reason, _ = classify_ssh_error(body)
+            out_lines.append(f"- {n.get('name','unknown')}: ❌ {reason}")
+    return "\n".join(out_lines)
+
+
+def acquire_singleton_lock() -> Any:
+    os.makedirs("/opt/traffic-local", exist_ok=True)
+    f = open(LOCK_FILE, "w", encoding="utf-8")
+    try:
+        fcntl.flock(f.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        f.write(str(os.getpid()))
+        f.flush()
+        return f
+    except BlockingIOError:
+        raise SystemExit("another bot_listener instance is running")
+
+
 def main() -> None:
+    _lock = acquire_singleton_lock()
+
     cfg = load_json(CFG, {})
     token_file = cfg.get("telegram_bot_token_file", "/opt/traffic-local/tg_bot_token.txt")
     chat_id_allow = str(cfg.get("telegram_chat_id", "")).strip()
+    allowed_user_ids = {int(x) for x in cfg.get("allowed_user_ids", []) if str(x).isdigit()}
 
     if not chat_id_allow:
         raise SystemExit("config 缺少 telegram_chat_id")
@@ -212,6 +254,7 @@ def main() -> None:
         "可用命令：\n"
         "/traffic - 查看主控机当前流量\n"
         "/traffic <node> - 查看指定节点流量\n"
+        "/summary - 汇总所有节点\n"
         "/traffic_send - 主控机立即推送一条通知\n"
         "/selfcheck - 主控机自检\n"
         "/selfcheck <node> - 指定节点自检\n"
@@ -247,6 +290,11 @@ def main() -> None:
                 if chat_id != chat_id_allow:
                     continue
 
+                sender = msg.get("from", {})
+                sender_id = int(sender.get("id", 0)) if sender.get("id") else 0
+                if allowed_user_ids and sender_id not in allowed_user_ids:
+                    continue
+
                 text = msg.get("text", "")
                 if not text.startswith("/"):
                     continue
@@ -269,6 +317,9 @@ def main() -> None:
                     else:
                         out = run_local_report(["--dry-run"])
                         send_message(token, chat_id, out or "(无输出)", thread_id)
+
+                elif cmd == "/summary":
+                    send_message(token, chat_id, summary_all_nodes(), thread_id)
 
                 elif cmd == "/traffic_send":
                     _ = run_local_report(["--send"])

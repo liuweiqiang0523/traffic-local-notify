@@ -45,6 +45,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-loca
 ## Telegram 命令（仅主控机）
 - `/help`
 - `/nodes`
+- `/summary`
 - `/traffic`
 - `/traffic <node>`
 - `/selfcheck`
@@ -138,3 +139,17 @@ bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-loca
 > - `MASTER_KEY` 是 worker 上用于 ssh 到 master 的私钥路径。
 > - worker 会自动探测公网 IP 并写入 master 的 `/opt/traffic-local/nodes.json`。
 > - 自动注册失败不会中断本机安装，会给出可手动补录的 JSON 条目。
+
+
+## 安全建议（白名单）
+在 `config.json` 里加：
+```json
+"allowed_user_ids": [241088406]
+```
+只允许白名单用户触发 Telegram 命令。
+
+
+## 固定版本安装（避免漂移）
+```bash
+VERSION=v1.0.13 bash <(curl -fsSL https://raw.githubusercontent.com/liuweiqiang0523/traffic-local-notify/main/install.sh)
+```
